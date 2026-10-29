@@ -91,9 +91,9 @@ export function GameMap(props: {
       for (const c of props.cities) {
         const node = document.createElement("div");
         node.className = "tk-city";
-        node.dataset.owned = String(owned.has(c.id));
-        node.dataset.here = String(st?.profile.current_city_id === c.id);
-        node.dataset.selected = String(sel?.kind === "city" && sel.id === c.id);
+        node.dataset["owned"] = String(owned.has(c.id));
+        node.dataset["here"] = String(st?.profile.current_city_id === c.id);
+        node.dataset["selected"] = String(sel?.kind === "city" && sel.id === c.id);
         const bars = active.map((r) => {
           const eff = Number(c[`eff_${r}` as const]);
           return `<div class="tk-bar"><i style="width:${Math.round(eff * 40)}px;background:${RESOURCE_META[r].color}"></i>${Math.round(eff * 100)}%</div>`;
@@ -109,8 +109,8 @@ export function GameMap(props: {
         const node = document.createElement("div");
         node.className = "tk-poi";
         node.style.color = RESOURCE_META[CATEGORY_META[p.category].resource].color;
-        node.dataset.claimed = String(claimed.has(p.id));
-        node.dataset.selected = String(sel?.kind === "poi" && sel.id === p.id);
+        node.dataset["claimed"] = String(claimed.has(p.id));
+        node.dataset["selected"] = String(sel?.kind === "poi" && sel.id === p.id);
         node.title = p.name;
         node.innerHTML = poiSvg(p.category);
         node.addEventListener("click", (e) => { e.stopPropagation(); onSelectRef.current({ kind: "poi", id: p.id }); });

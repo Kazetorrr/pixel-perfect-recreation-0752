@@ -23,7 +23,7 @@ export const CATEGORY_META: Record<Category, { label: string; plural: string; re
 
 // Map style: configurable via VITE_MAP_STYLE_URL; falls back to OSM raster on failure.
 export const MAP_STYLE_URL =
-  (import.meta.env.VITE_MAP_STYLE_URL as string | undefined) || "https://tiles.openfreemap.org/styles/dark";
+  (import.meta.env["VITE_MAP_STYLE_URL"] as string | undefined) || "https://tiles.openfreemap.org/styles/dark";
 export const MAP_CENTER: [number, number] = [17.62, 49.22];
 
 export const fmt = (n: number | null | undefined) => new Intl.NumberFormat("cs-CZ").format(Math.round(n ?? 0));
