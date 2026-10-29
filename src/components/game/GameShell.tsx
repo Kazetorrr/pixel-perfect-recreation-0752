@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Map as MapIcon, Users } from "lucide-react";
 import { useGameState, useGuild, useSession, type GameState, type Guild } from "@/game/api";
 import { AuthScreen } from "./AuthScreen";
+import logoIcon from "@/assets/summit-logo-icon.png";
 import { Onboarding } from "./Onboarding";
 import { TopBar } from "./TopBar";
 
@@ -11,7 +12,15 @@ export function GameShell({ children }: { children: (state: GameState, guild: Gu
   const onboarded = !!st.data && (st.data as GameState).onboarded;
   const guild = useGuild(!!session && onboarded);
 
-  if (!ready || (session && st.isLoading)) return <div className="grid min-h-screen place-items-center text-muted-foreground">Načítám…</div>;
+  if (!ready || (session && st.isLoading))
+    return (
+      <div className="grid min-h-screen place-items-center">
+        <div className="flex flex-col items-center gap-4">
+          <img src={logoIcon} alt="summ-it" width={96} height={96} className="animate-pulse" />
+          <div className="text-muted-foreground">Načítám…</div>
+        </div>
+      </div>
+    );
   if (!session) return <AuthScreen />;
   if (st.error) return <div className="grid min-h-screen place-items-center text-destructive">{(st.error as Error).message}</div>;
   if (!onboarded) return <Onboarding />;
