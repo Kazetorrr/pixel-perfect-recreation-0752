@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Mountain } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import heroUrl from "@/assets/trekra-hero.jpg";
+import logoIcon from "@/assets/summit-logo-icon.png";
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"in" | "up">("up");
@@ -34,7 +34,7 @@ export function AuthScreen() {
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
       <div className="panel relative w-full max-w-sm p-6">
         <div className="mb-6 flex items-center gap-3">
-          <Mountain className="size-8 text-primary" />
+          <img src={logoIcon} alt="" className="size-9" />
           <div><h1 className="text-2xl font-semibold">summ-it</h1><p className="text-sm text-muted-foreground">Choď, stav, objevuj.</p></div>
         </div>
         <form onSubmit={submit} className="space-y-3">
