@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RESOURCES, RESOURCE_META, fmt, haversineKm, type Resource } from "@/game/config";
+import { RESOURCES, RESOURCE_META, TIER_META, tierBonusText, fmt, haversineKm, type Resource } from "@/game/config";
 import { quoteShipment, useAction, type City, type GameState, type Guild } from "@/game/api";
 import { ResCounters, ResDot, Section } from "./ui";
 
@@ -16,9 +16,10 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
   const isHere = state.profile.current_city_id === city.id;
   const isHome = state.profile.home_city_id === city.id;
   const eff = (r: Resource) => Number(city[`eff_${r}` as const]);
-  const rate = (r: Resource) => { const l = pc?.buildings[r]; return l ? (cfg.prod_per_level[l] ?? 0) * eff(r) : 0; };
+  const bonus = cfg.tier_bonus?.[city.tier] ?? {};
+  const rate = (r: Resource) => { const l = pc?.buildings[r]; return l ? (cfg.prod_per_level[l] ?? 0) * eff(r) * (1 + (bonus.production ?? 0)) : 0; };
   const stored = pc ? RESOURCES.reduce((s, r) => s + (pc.inventory[r] ?? 0), 0) : 0;
-  const cap = pc ? pc.warehouse_level * cfg.warehouse_capacity_per_level : 0;
+  const cap = pc ? (pc.capacity ?? pc.warehouse_level * cfg.warehouse_capacity_per_level) : 0;
 
   const build = useAction<{ p_city: string; p_resource: Resource }>("build_or_upgrade", (d) =>
     (d as { level: number }).level === 1 ? "Budova postavena" : "Produkce vylepšena");
@@ -31,7 +32,7 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
         <div className="min-w-0 flex-1">
           <h2 className="flex items-center gap-2 text-xl font-semibold">{city.name}{isHome && <Crown className="size-4 text-res-yellow" />}</h2>
           <p className="text-sm text-muted-foreground">
-            {pc ? (isHome ? "Domovské město" : "Moje město") : "Neprozkoumané město"}
+            {TIER_META[city.tier].label} · {pc ? (isHome ? "Domovské město" : "Moje město") : "Neprozkoumané město"}
             {pc && ` · Sklad úr. ${pc.warehouse_level}`}{isHere && " · Jste zde"}
           </p>
         </div>
@@ -67,6 +68,7 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
               </Section>
               <Section title="Sklad zásob" right={`${fmt(stored)} / ${fmt(cap)}`}><ResCounters inv={pc.inventory} /></Section>
               <EfficiencyBars city={city} />
+              <Section title="Bonus sídla"><p className="text-sm"><span className="font-medium">{TIER_META[city.tier].label}:</span> <span className="text-muted-foreground">{tierBonusText(city.tier, bonus)}</span></p></Section>
               {city.special && <Section title="Speciální vlastnosti"><p className="text-sm text-muted-foreground">{city.special}</p></Section>}
               {!isHere && <TravelCard city={city} cities={cities} state={state} />}
             </TabsContent>

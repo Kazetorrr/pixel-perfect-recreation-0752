@@ -43,3 +43,26 @@ export const TRAVEL_TRAIL = {
   fadeMs: 1200,
   routingProfile: "foot", // OSRM profile for real paths; falls back to an arc
 };
+
+// Settlement tiers (presentation only; bonus values come from game_config().tier_bonus).
+export const TIERS = ["village", "town", "regional"] as const;
+export type Tier = (typeof TIERS)[number];
+export const TIER_META: Record<Tier, { label: string }> = {
+  village: { label: "Vesnice" },
+  town: { label: "Město" },
+  regional: { label: "Krajské město" },
+};
+export function tierBonusText(t: Tier, b: { production?: number; warehouse?: number; logistics?: number }) {
+  const pct = (v?: number) => `+${Math.round((v ?? 0) * 100)} %`;
+  if (t === "village") return `${pct(b.production)} základní produkce`;
+  if (t === "town") return `${pct(b.warehouse)} kapacita skladu`;
+  return `${pct(b.logistics)} kapacita logistiky (levnější přeprava z tohoto města)`;
+}
+export const DEFAULT_PLAYER_COLOR = "#3b82f6";
+
+// Neutral grey settlement pictograms (inner icon), 24x24 viewBox.
+export const TIER_ICON: Record<Tier, string> = {
+  village: `<path d="M4 20V11l8-6 8 6v9z"/><path d="M10 20v-5h4v5"/>`,
+  town: `<path d="M3 20v-8l4-3 4 3v8M11 20V9l2-5 2 5v11M15 20v-7l3-2 3 2v7M2 20h20"/><path d="M13 6v.01"/>`,
+  regional: `<path d="M3 20V8h3v2h2V8h3v2h2V8h3v2h2V8h3v12z"/><path d="M10 20v-5a2 2 0 0 1 4 0v5M12 8V3l3 1-3 1"/>`,
+};

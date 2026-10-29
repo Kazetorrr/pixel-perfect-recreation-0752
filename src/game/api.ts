@@ -1,3 +1,4 @@
+import type { Tier } from "@/game/config";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
@@ -6,21 +7,22 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, Resource } from "./config";
 
 export type City = {
-  id: string; name: string; lat: number; lng: number; special: string | null;
+  id: string; name: string; lat: number; lng: number; special: string | null; tier: Tier;
   eff_blue: number; eff_green: number; eff_yellow: number; eff_red: number;
 };
 export type Poi = { id: string; osm_id: string; name: string; category: Category; lat: number; lng: number; elevation: number | null; osm_tags: string | null };
 export type Inv = Partial<Record<Resource, number>>;
-export type PlayerCity = { city_id: string; warehouse_level: number; market_level: number; buildings: Partial<Record<Resource, number>>; inventory: Inv };
+export type PlayerCity = { city_id: string; warehouse_level: number; market_level: number; capacity?: number; buildings: Partial<Record<Resource, number>>; inventory: Inv };
 export type GameConfig = {
   dev_mode: boolean; steps_per_sp: number; max_level: number; prod_per_level: number[]; build_cost: number; upgrade_cost: number[];
   warehouse_capacity_per_level: number; warehouse_upgrade_cost: number[]; market_upgrade_cost: number[];
   travel_multiplier: number; sp_per_km: number; transport_sp_per_unit_km: number; market_discount_per_level: number;
   expedition_capacity: number; poi_cost: Record<Category, number>; gps_radius_m: number; gps_max_accuracy_m: number; guild_max_members: number;
+  tier_bonus: Record<Tier, { production?: number; warehouse?: number; logistics?: number }>; player_colors: string[];
 };
 export type GameState = {
   onboarded: boolean;
-  profile: { id: string; username: string; home_city_id: string; current_city_id: string; guild_id: string | null; steps_total: number; sp_balance: number; sp_spent: number; time_offset_seconds: number };
+  profile: { id: string; username: string; home_city_id: string; current_city_id: string; color: string; guild_id: string | null; steps_total: number; sp_balance: number; sp_spent: number; time_offset_seconds: number };
   cities: PlayerCity[];
   expedition: Inv;
   travel: { id: string; from_city: string; to_city: string; distance_km: number; sp_required: number; sp_paid: number } | null;

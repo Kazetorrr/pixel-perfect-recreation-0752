@@ -65,6 +65,7 @@ export type Database = {
           name: string
           osm_id: string | null
           special: string | null
+          tier: string
         }
         Insert: {
           eff_blue: number
@@ -77,6 +78,7 @@ export type Database = {
           name: string
           osm_id?: string | null
           special?: string | null
+          tier?: string
         }
         Update: {
           eff_blue?: number
@@ -89,6 +91,7 @@ export type Database = {
           name?: string
           osm_id?: string | null
           special?: string | null
+          tier?: string
         }
         Relationships: []
       }
@@ -358,6 +361,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          color: string
           created_at: string
           current_city_id: string | null
           guild_id: string | null
@@ -372,6 +376,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          color?: string
           created_at?: string
           current_city_id?: string | null
           guild_id?: string | null
@@ -386,6 +391,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          color?: string
           created_at?: string
           current_city_id?: string | null
           guild_id?: string | null
@@ -676,6 +682,7 @@ export type Database = {
       _me: {
         Args: never
         Returns: {
+          color: string
           created_at: string
           current_city_id: string | null
           guild_id: string | null
@@ -718,6 +725,7 @@ export type Database = {
         Returns: Json
       }
       _virtual_km: { Args: { a: string; b: string }; Returns: number }
+      _wh_cap: { Args: { p_city: string; p_uid: string }; Returns: number }
       build_or_upgrade: {
         Args: { p_city: string; p_resource: string }
         Returns: Json
@@ -734,7 +742,7 @@ export type Database = {
         Returns: Json
       }
       complete_onboarding: {
-        Args: { p_city: string; p_username: string }
+        Args: { p_city: string; p_color?: string; p_username: string }
         Returns: undefined
       }
       create_guild: { Args: { p_name: string }; Returns: Json }
@@ -770,6 +778,7 @@ export type Database = {
         }
         Returns: Json
       }
+      set_player_color: { Args: { p_color: string }; Returns: undefined }
       start_travel: { Args: { p_city: string }; Returns: Json }
       upgrade_facility: {
         Args: { p_city: string; p_kind: string }
