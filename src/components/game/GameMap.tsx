@@ -136,7 +136,7 @@ export function GameMap(props: {
           const eff = Number(c[`eff_${r}` as const]);
           return `<div class="tk-bar"><i style="width:${Math.round(eff * 40)}px;background:${RESOURCE_META[r].color}"></i>${Math.round(eff * 100)}%</div>`;
         }).join("");
-        const card = isSel || bars ? `<div class="tk-city-card">${isSel ? c.name : ""}${bars}</div>` : "";
+        const card = bars ? `<div class="tk-city-card">${bars}</div>` : "";
         const os = props.settlements?.find((x) => x.city_id === c.id)?.owners ?? [];
         const meId = st?.profile.id;
         const colors = os.map((o) => (o.id === meId ? (st?.profile.color ?? o.color) : o.color) || DEFAULT_PLAYER_COLOR);
