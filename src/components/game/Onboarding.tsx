@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { RESOURCES, RESOURCE_META } from "@/game/config";
-import { useCities } from "@/game/api";
+import { useCities, useGameState } from "@/game/api";
+import { DEFAULT_PLAYER_COLOR, TIER_META } from "@/game/config";
 
 export function Onboarding() {
   const cities = useCities();
@@ -17,12 +18,15 @@ export function Onboarding() {
   const [guildMode, setGuildMode] = useState<"none" | "create" | "join">("none");
   const [guildVal, setGuildVal] = useState("");
   const [busy, setBusy] = useState(false);
+  const [color, setColor] = useState(DEFAULT_PLAYER_COLOR);
+  const gs = useGameState();
+  const palette = (gs.data?.config?.player_colors ?? [DEFAULT_PLAYER_COLOR]) as string[];
   const sel = cities.data?.find((c) => c.id === city);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.rpc("complete_onboarding", { p_username: name, p_city: city });
+    const { error } = await supabase.rpc("complete_onboarding", { p_username: name, p_city: city, p_color: color });
     if (error) { setBusy(false); toast.error(error.message); return; }
     if (guildMode !== "none" && guildVal.trim()) {
       const r = guildMode === "create"
@@ -44,13 +48,24 @@ export function Onboarding() {
           <Label>Domovské město</Label>
           <Select value={city} onValueChange={setCity}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{cities.data?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+            <SelectContent>{cities.data?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} · {TIER_META[c.tier]?.label}</SelectItem>)}</SelectContent>
           </Select>
           {sel && (
             <div className="flex gap-3 pt-1 text-xs text-muted-foreground">
               {RESOURCES.map((r) => <span key={r} className="flex items-center gap-1"><span className="size-2 rounded-full" style={{ background: RESOURCE_META[r].color }} />{Math.round(Number(sel[`eff_${r}` as const]) * 100)} %</span>)}
             </div>
           )}
+        </div>
+        <div className="space-y-2">
+          <Label>Barva hráče</Label>
+          <div className="grid grid-cols-8 gap-2">
+            {palette.map((c) => (
+              <button key={c} type="button" aria-label={`Barva ${c}`} onClick={() => setColor(c)}
+                className="size-7 rounded-full border-2 transition-transform"
+                style={{ background: c, borderColor: color === c ? "var(--foreground)" : "transparent", transform: color === c ? "scale(1.15)" : undefined, boxShadow: color === c ? `0 0 10px ${c}` : undefined }} />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Barvou se na mapě označují vaše sídla. V guildě musí mít každý člen jinou barvu.</p>
         </div>
         <div className="space-y-2">
           <Label>Guilda (volitelné)</Label>

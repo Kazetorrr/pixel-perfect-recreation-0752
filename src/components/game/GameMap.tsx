@@ -6,7 +6,6 @@ import type { City, GameState, Poi } from "@/game/api";
 
 export type Selection = { kind: "city"; id: string } | { kind: "poi"; id: string } | null;
 
-const ICON_CITY = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6M12 8v.01"/></svg>`;
 function citySvg(tier: keyof typeof TIER_ICON, owner: string | null, level: number, market: number) {
   const R = 19, C = 2 * Math.PI * R, segs = 5, gap = 3, len = C / segs - gap;
   const ring = owner ? Array.from({ length: segs }, (_, i) =>
