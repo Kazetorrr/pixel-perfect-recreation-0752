@@ -30,6 +30,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
   const [layer, setLayer] = useState<"economy" | "exploration">("economy");
   const [sel, setSel] = useState<Selection>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showProd, setShowProd] = useState(false);
   const [resFilter, setResFilter] = useState<Record<Resource, boolean>>({ blue: true, green: true, yellow: true, red: true });
   const [catFilter, setCatFilter] = useState<Record<Category, boolean>>({ peak: true, ruin: true, tower: true, monument: true });
   const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? "Dorazili jste do cíle" : "SP přidány k cestě"));
@@ -43,7 +44,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
 
   return (
     <>
-      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} selection={sel}
+      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} showProd={showProd} selection={sel}
         onSelect={setSel} />
 
       {/* Left panel */}
@@ -69,7 +70,12 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
                 <span className="flex-1">{RESOURCE_META[r].short}</span>
                 <Checkbox checked={resFilter[r]} onCheckedChange={(v) => setResFilter({ ...resFilter, [r]: !!v })} />
               </label>
-            ))
+            )).concat(
+              <label key="showProd" className="mt-2 flex cursor-pointer items-center gap-3 border-t border-border pt-2.5 text-sm">
+                <span className="flex-1">Zobrazit produkci</span>
+                <Checkbox checked={showProd} onCheckedChange={(v) => setShowProd(!!v)} />
+              </label>,
+            )
             : CATEGORIES.map((c) => (
               <label key={c} className="flex cursor-pointer items-center gap-3 py-1.5 text-sm">
                 <span className="size-3 rounded-full" style={{ background: RESOURCE_META[CATEGORY_META[c].resource].color }} />

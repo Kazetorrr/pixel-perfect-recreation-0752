@@ -31,6 +31,7 @@ export function GameMap(props: {
   state: GameState | null;
   resFilter: Record<Resource, boolean>;
   catFilter: Record<Category, boolean>;
+  showProd?: boolean;
   selection: Selection;
   onSelect: (s: Selection) => void;
   flyTo?: [number, number] | null;
@@ -93,12 +94,15 @@ export function GameMap(props: {
         node.className = "tk-city";
         node.dataset["owned"] = String(owned.has(c.id));
         node.dataset["here"] = String(st?.profile.current_city_id === c.id);
-        node.dataset["selected"] = String(sel?.kind === "city" && sel.id === c.id);
-        const bars = active.map((r) => {
+        const isSel = sel?.kind === "city" && sel.id === c.id;
+        node.dataset["selected"] = String(isSel);
+        const bars = props.showProd ? active.map((r) => {
           const eff = Number(c[`eff_${r}` as const]);
           return `<div class="tk-bar"><i style="width:${Math.round(eff * 40)}px;background:${RESOURCE_META[r].color}"></i>${Math.round(eff * 100)}%</div>`;
-        }).join("");
-        node.innerHTML = `<div class="tk-city-dot">${ICON_CITY}</div><div class="tk-city-card">${c.name}${bars}</div>`;
+        }).join("") : "";
+        const card = isSel || bars ? `<div class="tk-city-card">${isSel ? c.name : ""}${bars}</div>` : "";
+        node.innerHTML = `<div class="tk-city-dot">${ICON_CITY}</div>${card}`;
+        node.title = c.name;
         node.addEventListener("click", (e) => { e.stopPropagation(); onSelectRef.current({ kind: "city", id: c.id }); });
         markers.current.push(new ml.Marker({ element: node, anchor: "left", offset: [-19, 0] }).setLngLat([c.lng, c.lat]).addTo(m));
       }
