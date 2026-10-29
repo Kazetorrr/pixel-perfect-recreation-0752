@@ -153,8 +153,17 @@ export function GameMap(props: {
       }
     } else {
       const claimed = new Set([...(st?.guild_claims ?? []), ...(st?.my_claims ?? [])]);
+      // ~8k POIs: only those in view; peaks (most numerous) appear from closer zoom.
+      const z = view.zoom, b = m.getBounds().toArray();
+      const padX = (b[1][0] - b[0][0]) * 0.15, padY = (b[1][1] - b[0][1]) * 0.15;
+      const minZoom: Record<Category, number> = { peak: 10.8, ruin: 8.5, tower: 8.5, monument: 8.5 };
       for (const p of props.pois) {
         if (!props.catFilter[p.category]) continue;
+        const keepP = claimed.has(p.id) || (sel?.kind === "poi" && sel.id === p.id);
+        if (!keepP) {
+          if (z < minZoom[p.category]) continue;
+          if (p.lng < b[0][0] - padX || p.lng > b[1][0] + padX || p.lat < b[0][1] - padY || p.lat > b[1][1] + padY) continue;
+        }
         const node = document.createElement("div");
         node.className = "tk-poi";
         node.style.color = RESOURCE_META[CATEGORY_META[p.category].resource].color;

@@ -77,8 +77,14 @@ export const useCities = () =>
   } });
 export const usePois = () =>
   useQuery({ queryKey: ["pois"], staleTime: Infinity, queryFn: async () => {
-    const { data, error } = await supabase.from("pois").select("*");
-    if (error) throw error; return data as unknown as Poi[];
+    const { count, error: ce } = await supabase.from("pois").select("id", { count: "exact", head: true });
+    if (ce) throw ce;
+    const PAGE = 1000, pages = Math.ceil((count ?? 0) / PAGE);
+    const parts = await Promise.all(Array.from({ length: pages }, (_, i) =>
+      supabase.from("pois").select("*").order("id").range(i * PAGE, i * PAGE + PAGE - 1)));
+    const all: Poi[] = [];
+    for (const p of parts) { if (p.error) throw p.error; all.push(...(p.data as unknown as Poi[])); }
+    return all;
   } });
 export const useGameState = (enabled: boolean) =>
   useQuery({ queryKey: ["state"], enabled, refetchInterval: 20_000, refetchOnWindowFocus: true, queryFn: () => rpc<GameState | { onboarded: false }>("get_state") });
