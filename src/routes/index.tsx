@@ -30,6 +30,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
   const [layer, setLayer] = useState<"economy" | "exploration">("economy");
   const [sel, setSel] = useState<Selection>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showProd, setShowProd] = useState(false);
   const [resFilter, setResFilter] = useState<Record<Resource, boolean>>({ blue: true, green: true, yellow: true, red: true });
   const [catFilter, setCatFilter] = useState<Record<Category, boolean>>({ peak: true, ruin: true, tower: true, monument: true });
   const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? "Dorazili jste do cíle" : "SP přidány k cestě"));
@@ -43,7 +44,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
 
   return (
     <>
-      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} selection={sel}
+      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} showProd={showProd} selection={sel}
         onSelect={setSel} />
 
       {/* Left panel */}
