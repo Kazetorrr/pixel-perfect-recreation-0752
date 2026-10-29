@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({ mutate: vi.fn(), gps: vi.fn() }));
 vi.mock('@/game/api', () => ({ useAction: (fn: string) => ({ isPending: false, mutate: (args: unknown) => mocks.mutate(fn, args) }) }));
 const city = { id: 'zlin', tier: 'regional', lat: 49.2, lng: 17.6 } as City;
 const pc = { inventory: { blue: 10 } } as PlayerCity;
-const state = (enabled: boolean) => ({ config: { ...fixture, dev_mode: enabled }, expedition: {} }) as GameState;
+const state = (enabled: boolean) => ({ config: { ...fixture, dev_mode: enabled }, expedition: {} }) as unknown as GameState;
 
 describe('Test expedition GPS bypass', () => {
   beforeEach(() => {
