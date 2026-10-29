@@ -75,6 +75,11 @@ export const usePois = () =>
   } });
 export const useGameState = (enabled: boolean) =>
   useQuery({ queryKey: ["state"], enabled, queryFn: () => rpc<GameState | { onboarded: false }>("get_state") });
+export type SettlementOwner = { id: string; username: string; color: string; market_level: number; warehouse_level: number; buildings: Partial<Record<Resource, number>> };
+export type Settlement = { city_id: string; owners: SettlementOwner[] };
+/** Settlements with real infrastructure of me + my guild mates. Current player always first. */
+export const useSettlements = (enabled: boolean) =>
+  useQuery({ queryKey: ["settlements"], enabled, refetchInterval: 20_000, refetchOnWindowFocus: true, queryFn: async () => (await rpc<Settlement[] | null>("get_guild_settlements")) ?? [] });
 export const useGuild = (enabled: boolean) => useQuery({ queryKey: ["guild"], enabled, queryFn: () => rpc<Guild | null>("get_guild") });
 export const useLeaderboards = (category: string, verification: string) =>
   useQuery({ queryKey: ["lb", category, verification], queryFn: () => rpc<{
@@ -99,6 +104,7 @@ export function useAction<A extends Record<string, unknown>>(fn: string, success
       if (msg) toast.success(msg);
       qc.invalidateQueries({ queryKey: ["state"] });
       qc.invalidateQueries({ queryKey: ["guild"] });
+      qc.invalidateQueries({ queryKey: ["settlements"] });
       qc.invalidateQueries({ queryKey: ["lb"] });
       qc.invalidateQueries({ queryKey: ["poi"] });
     },
