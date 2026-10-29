@@ -71,6 +71,13 @@
       "when": 1793311098323,
       "tag": "0009_test_onboarding_without_gps",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793311448318,
+      "tag": "0010_test_expedition_loading_without_gps",
+      "breakpoints": true
     }
   ]
 }

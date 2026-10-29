@@ -974,6 +974,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      prepare_expedition_test: {
+        Args: { p_amounts: Json; p_city: string }
+        Returns: undefined
+      }
       quote_shipment: {
         Args: { p_from: string; p_qty: number; p_to: string }
         Returns: number
