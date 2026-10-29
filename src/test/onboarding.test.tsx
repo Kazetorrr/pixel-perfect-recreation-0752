@@ -25,7 +25,9 @@ describe('Temporary test onboarding', () => {
     const button = view.container.querySelector('[data-test-onboarding]');
     const form = view.container.querySelector('form');
     if (!button || !form) throw new Error('Missing test onboarding action');
-    fireEvent.submit(form, { submitter: button });
+    const event = new Event('submit', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'submitter', { value: button });
+    fireEvent(form, event);
     await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('complete_onboarding_test', expect.objectContaining({ p_username: 'TestHrac', p_city: 'zlin' })));
     expect(mocks.gps).not.toHaveBeenCalled();
   });
@@ -37,7 +39,9 @@ describe('Temporary test onboarding', () => {
     if (!form) throw new Error('Missing onboarding form');
     const forgedSubmitter = document.createElement('button');
     forgedSubmitter.setAttribute('data-test-onboarding', 'true');
-    fireEvent.submit(form, { submitter: forgedSubmitter });
+    const event = new Event('submit', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'submitter', { value: forgedSubmitter });
+    fireEvent(form, event);
     expect(mocks.rpc).not.toHaveBeenCalled();
     expect(mocks.gps).not.toHaveBeenCalled();
   });
