@@ -7,5 +7,6 @@
 - [ ] Implementovat tržiště, kvóty a bezpečnou přepravu.
 - [ ] Oddělit cestování od placeného zakládání sídel.
 - [ ] Upravit všechny ceny a přehledy, zabezpečit simulátory.
+- [ ] Společné testování povolit všem přihlášeným; jediným přepnutím vypnout simulátory pro všechny při ostrém spuštění.
 - [ ] Spustit testy pravidel a ověřit skutečné hráčské scénáře.
 - [ ] Budoucí Health Connect / HealthKit: vyžaduje mobilní propojení mimo současnou webovou změnu.
