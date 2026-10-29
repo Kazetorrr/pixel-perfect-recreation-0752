@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { CATEGORY_META, MAP_CENTER, MAP_STYLE_URL, RESOURCES, RESOURCE_META, TRAVEL_TRAIL, type Category, type Resource } from "@/game/config";
+import { CATEGORY_META, MAP_CENTER, MAP_STYLE_URL, RESOURCES, RESOURCE_META, TIER_ICON, TRAVEL_TRAIL, DEFAULT_PLAYER_COLOR, type Category, type Resource } from "@/game/config";
 import type { City, GameState, Poi } from "@/game/api";
 
 export type Selection = { kind: "city"; id: string } | { kind: "poi"; id: string } | null;
 
 const ICON_CITY = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6M12 8v.01"/></svg>`;
+function citySvg(tier: keyof typeof TIER_ICON, owner: string | null, level: number, market: number) {
+  const R = 19, C = 2 * Math.PI * R, segs = 5, gap = 3, len = C / segs - gap;
+  const ring = owner ? Array.from({ length: segs }, (_, i) =>
+    `<circle cx="24" cy="24" r="${R}" fill="none" stroke="${owner}" stroke-width="3" stroke-linecap="round" opacity="${i < level ? 1 : 0.18}"
+      stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-(i * C) / segs - C / 4 + gap / 2}" transform="rotate(0 24 24)"/>`).join("") : "";
+  const crown = owner && market > 0 ? `<g class="tk-crown" transform="translate(17 -1)"><path d="M1 9h12l-1-6-3 3-2-4-2 4-3-3z" fill="var(--panel-2)" stroke="${owner}" stroke-width="1.4" stroke-linejoin="round"/><text x="7" y="16" text-anchor="middle" font-size="6" fill="${owner}">${market}</text></g>` : "";
+  return `<svg width="48" height="48" viewBox="0 -2 48 50" overflow="visible">
+    <circle cx="24" cy="24" r="15" fill="var(--panel-2)" stroke="${owner ?? "oklch(0.55 0.01 230)"}" stroke-width="2"/>
+    ${ring}
+    <g transform="translate(15 15) scale(0.75)" fill="none" stroke="oklch(0.78 0.005 230)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TIER_ICON[tier]}</g>
+    ${crown}</svg>`;
+}
 const ICONS: Record<Category, string> = {
   peak: `<path d="m3 20 6-11 4 6 3-4 5 9z"/>`,
   ruin: `<path d="M4 21V9l2-2 2 2 2-2 2 2v12M14 21v-8l3-2 3 2v8M4 21h16"/>`,
@@ -64,6 +76,8 @@ export function GameMap(props: {
       };
       const timer = setTimeout(() => { if (!m.isStyleLoaded()) fallback(); }, 8000);
       m.on("error", (e) => { if (!m.isStyleLoaded() && String(e.error?.message ?? "").match(/style|fetch|Failed/i)) fallback(); });
+      const zc = () => el.current?.classList.toggle("tk-compact", m.getZoom() < 9.3);
+      m.on("zoom", zc); zc();
       m.on("load", () => { clearTimeout(timer); setReady(true); });
       m.on("style.load", () => setReady(true));
       m.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
@@ -101,10 +115,14 @@ export function GameMap(props: {
           return `<div class="tk-bar"><i style="width:${Math.round(eff * 40)}px;background:${RESOURCE_META[r].color}"></i>${Math.round(eff * 100)}%</div>`;
         }).join("");
         const card = isSel || bars ? `<div class="tk-city-card">${isSel ? c.name : ""}${bars}</div>` : "";
-        node.innerHTML = `<div class="tk-city-dot">${ICON_CITY}</div>${card}`;
+        const pc = st?.cities.find((x) => x.city_id === c.id);
+        const owner = pc ? (st?.profile.color ?? DEFAULT_PLAYER_COLOR) : null;
+        const lvl = pc ? Math.max(0, ...Object.values(pc.buildings).map(Number)) : 0;
+        if (owner) node.style.setProperty("--owner", owner);
+        node.innerHTML = `<div class="tk-city-dot">${citySvg(c.tier ?? "town", owner, lvl, pc?.market_level ?? 0)}</div>${card}`;
         node.title = c.name;
         node.addEventListener("click", (e) => { e.stopPropagation(); onSelectRef.current({ kind: "city", id: c.id }); });
-        markers.current.push(new ml.Marker({ element: node, anchor: "left", offset: [-19, 0] }).setLngLat([c.lng, c.lat]).addTo(m));
+        markers.current.push(new ml.Marker({ element: node, anchor: "left", offset: [-24, 0] }).setLngLat([c.lng, c.lat]).addTo(m));
       }
     } else {
       const claimed = new Set([...(st?.guild_claims ?? []), ...(st?.my_claims ?? [])]);

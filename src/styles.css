@@ -110,14 +110,12 @@
 
 /* Map markers (DOM elements created by MapLibre) */
 .tk-city { display: flex; align-items: center; gap: 6px; cursor: pointer; transform: translateY(-2px); }
-.tk-city-dot {
-  width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center;
-  background: var(--panel-2); border: 2px solid oklch(0.55 0.01 230); color: oklch(0.85 0.005 230);
-  transition: transform .15s, box-shadow .15s;
-}
-.tk-city[data-owned="true"] .tk-city-dot { border-color: var(--res-blue); box-shadow: 0 0 0 4px oklch(0.62 0.19 259 / 0.18); }
-.tk-city[data-here="true"] .tk-city-dot { box-shadow: 0 0 0 6px oklch(0.62 0.19 259 / 0.3), 0 0 22px oklch(0.62 0.19 259 / 0.6); }
-.tk-city[data-selected="true"] .tk-city-dot { transform: scale(1.15); border-color: var(--foreground); }
+.tk-city-dot { width: 48px; height: 48px; display: grid; place-items: center; transition: transform .15s, filter .15s; }
+.tk-city[data-owned="true"] .tk-city-dot { filter: drop-shadow(0 0 5px color-mix(in oklch, var(--owner) 55%, transparent)); }
+.tk-city[data-here="true"] .tk-city-dot { filter: drop-shadow(0 0 12px var(--owner, var(--primary))); }
+.tk-city[data-selected="true"] .tk-city-dot { transform: scale(1.15); }
+.tk-compact .tk-city-dot { transform: scale(0.6); }
+.tk-compact .tk-city-dot .tk-crown { display: none; }
 .tk-city-card {
   background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; min-width: 104px;
   box-shadow: var(--shadow-panel); color: var(--foreground); font-size: 12px; font-weight: 600;
