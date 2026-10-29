@@ -7,11 +7,15 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RESOURCES, RESOURCE_META, TIER_META, tierBonusText, fmt, haversineKm, type Resource } from "@/game/config";
-import { quoteShipment, useAction, type City, type GameState, type Guild } from "@/game/api";
+import { quoteShipment, useAction, type City, type GameState, type Guild, type SettlementOwner } from "@/game/api";
 import { ResCounters, ResDot, Section } from "./ui";
 
-export function CityPanel({ city, cities, state, guild, onClose }: { city: City; cities: City[]; state: GameState; guild: Guild | null | undefined; onClose: () => void }) {
+export function CityPanel({ city, cities, state, guild, owners = [], onClose }: { city: City; cities: City[]; state: GameState; guild: Guild | null | undefined; owners?: SettlementOwner[]; onClose: () => void }) {
   const cfg = state.config;
+  const me = state.profile.id;
+  const others = owners.filter((o) => o.id !== me);
+  const [who, setWho] = useState<string>(owners.some((o) => o.id === me) || others.length === 0 ? me : others[0]!.id);
+  const viewed = who === me ? null : others.find((o) => o.id === who) ?? null;
   const pc = state.cities.find((c) => c.city_id === city.id);
   const isHere = state.profile.current_city_id === city.id;
   const isHome = state.profile.home_city_id === city.id;
@@ -32,7 +36,7 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
         <div className="min-w-0 flex-1">
           <h2 className="flex items-center gap-2 text-xl font-semibold">{city.name}{isHome && <Crown className="size-4 text-res-yellow" />}</h2>
           <p className="text-sm text-muted-foreground">
-            {TIER_META[city.tier].label} · {pc ? (isHome ? "Domovské město" : "Moje město") : "Neprozkoumané město"}
+            {TIER_META[city.tier].label} · {pc ? (isHome ? "Domovské město" : "Moje město") : others.length ? "Sídlo guildy" : "Neprozkoumané město"}
             {pc && ` · Sklad úr. ${pc.warehouse_level}`}{isHere && " · Jste zde"}
           </p>
         </div>
@@ -40,7 +44,35 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {!pc ? (
+        {others.length > 0 && (
+          <Section title={owners.length === 1 ? "Člen guildy zde má infrastrukturu" : `${owners.length} ${owners.length < 5 ? "členové" : "členů"} guildy zde ${owners.length < 5 ? "mají" : "má"} infrastrukturu`}>
+            <div className="space-y-1">
+              {owners.map((o) => {
+                const lv = Object.values(o.buildings).reduce((a, b) => a + Number(b), 0);
+                const active = o.id === who;
+                return (
+                  <button key={o.id} type="button" onClick={() => setWho(o.id)}
+                    className={`flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-sm transition-colors ${active ? "border-primary bg-accent" : "border-transparent hover:bg-muted"}`}>
+                    <span className="size-3 rounded-full" style={{ background: o.id === me ? state.profile.color : o.color }} />
+                    <span className="flex-1 truncate">{o.id === me ? `${o.username} (já)` : o.username}</span>
+                    <span className="text-xs text-muted-foreground">budovy {lv} · tržiště {o.market_level}</span>
+                  </button>
+                );
+              })}
+              {!owners.some((o) => o.id === me) && (
+                <button type="button" onClick={() => setWho(me)}
+                  className={`flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left text-sm ${who === me ? "border-primary bg-accent" : "border-transparent hover:bg-muted"}`}>
+                  <span className="size-3 rounded-full" style={{ background: state.profile.color }} />
+                  <span className="flex-1">Moje možnosti</span>
+                </button>
+              )}
+            </div>
+          </Section>
+        )}
+        {others.length > 0 && <div className="h-3" />}
+        {viewed ? (
+          <MemberView city={city} owner={viewed} state={state} cities={cities} />
+        ) : !pc ? (
           <div className="space-y-3">
             <EfficiencyBars city={city} />
             <TravelCard city={city} cities={cities} state={state} />
@@ -279,6 +311,70 @@ function ShipmentForm({ from, cities, state, guild }: { from: City; cities: City
             </Button>
           </>
         )}
+      </div>
+    </Section>
+  );
+}
+
+function MemberView({ city, owner, state, cities }: { city: City; owner: SettlementOwner; state: GameState; cities: City[] }) {
+  const cfg = state.config;
+  const eff = (r: Resource) => Number(city[`eff_${r}` as const]);
+  const bonus = cfg.tier_bonus?.[city.tier] ?? {};
+  return (
+    <div className="space-y-3">
+      <Section title={`Infrastruktura hráče ${owner.username}`} right={<span className="text-[10px] uppercase text-muted-foreground">jen náhled</span>}>
+        <div className="grid grid-cols-4 gap-2">
+          {RESOURCES.map((r) => {
+            const l = owner.buildings[r];
+            const rate = l ? (cfg.prod_per_level[l] ?? 0) * eff(r) * (1 + (bonus.production ?? 0)) : 0;
+            return (
+              <div key={r} className="rounded-lg border bg-panel-2 p-2 text-center">
+                <ResDot r={r} />
+                <div className="text-lg font-bold tabular-nums" style={{ color: RESOURCE_META[r].color }}>+{fmt(rate)}</div>
+                <div className="text-[10px] text-muted-foreground">{l ? `úr. ${l}` : "bez budovy"}</div>
+              </div>
+            );
+          })}
+        </div>
+        <dl className="mt-3 grid grid-cols-2 gap-y-1 text-sm">
+          <dt className="text-muted-foreground">Sklad</dt><dd className="text-right">úroveň {owner.warehouse_level}</dd>
+          <dt className="text-muted-foreground">Tržiště</dt><dd className="text-right">{owner.market_level ? `úroveň ${owner.market_level}` : "nepostaveno"}</dd>
+        </dl>
+      </Section>
+      <ShipToMember city={city} owner={owner} state={state} cities={cities} />
+    </div>
+  );
+}
+
+function ShipToMember({ city, owner, state, cities }: { city: City; owner: SettlementOwner; state: GameState; cities: City[] }) {
+  const mine = state.cities;
+  const [fromId, setFrom] = useState<string>(mine.find((c) => c.city_id === state.profile.current_city_id)?.city_id ?? mine[0]?.city_id ?? "");
+  const [res, setRes] = useState<Resource>("blue");
+  const [qty, setQty] = useState(20);
+  const avail = mine.find((c) => c.city_id === fromId)?.inventory[res] ?? 0;
+  const quote = useQuery({ queryKey: ["quote", fromId, city.id, qty], enabled: !!fromId && qty > 0, queryFn: () => quoteShipment(fromId, city.id, qty) });
+  const ship = useAction<{ p_from: string; p_to: string; p_resource: Resource; p_qty: number; p_recipient: string }>("send_shipment", "Přeprava dokončena");
+  const name = (id: string) => cities.find((c) => c.id === id)?.name ?? id;
+  if (!mine.length) return null;
+  return (
+    <Section title={`Poslat zásoby hráči ${owner.username}`} right={<Truck className="size-4" />}>
+      <div className="space-y-2">
+        <Select value={fromId} onValueChange={setFrom}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{mine.map((c) => <SelectItem key={c.city_id} value={c.city_id}>{name(c.city_id)} → {city.name}</SelectItem>)}</SelectContent>
+        </Select>
+        <div className="flex gap-2">
+          <ResSelect value={res} onChange={setRes} />
+          <Input type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="w-24" />
+        </div>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>K dispozici: {fmt(avail)}</span>
+          <span>Cena: <b className="text-foreground">{quote.data != null ? `${fmt(quote.data)} SP` : "…"}</b> / {fmt(state.profile.sp_balance)} SP</span>
+        </div>
+        <Button className="w-full" disabled={ship.isPending || qty <= 0 || qty > avail || (quote.data ?? Infinity) > state.profile.sp_balance}
+          onClick={() => ship.mutate({ p_from: fromId, p_to: city.id, p_resource: res, p_qty: qty, p_recipient: owner.id })}>
+          <Truck /> Odeslat {qty} {RESOURCE_META[res].genitive} zásob
+        </Button>
       </div>
     </Section>
   );

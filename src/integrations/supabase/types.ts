@@ -752,6 +752,7 @@ export type Database = {
       fund_travel: { Args: { p_amount: number }; Returns: Json }
       game_config: { Args: never; Returns: Json }
       get_guild: { Args: never; Returns: Json }
+      get_guild_settlements: { Args: never; Returns: Json }
       get_leaderboards: {
         Args: { p_category: string; p_verification: string }
         Returns: Json
