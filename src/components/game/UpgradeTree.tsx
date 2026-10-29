@@ -41,7 +41,7 @@ export function UpgradeTree({ city, state, pc }: { city: City; state: GameState;
         const bought = node.level <= current(node.kind), available = node.level === current(node.kind)+1;
         const active = selected.kind === node.kind && selected.level === node.level;
         return <Button key={`${node.kind}-${node.level}`} size="icon" variant="outline" title={`${labels[node.kind]} · úroveň ${node.level} · ${bought?'Zakoupeno':available?'Dostupné':'Uzamčeno'}`} aria-label={`${labels[node.kind]} úroveň ${node.level}`} aria-pressed={active} onClick={()=>setSelected(node)}
-          style={{left:`${node.x}%`,top:`${node.y}%`}} className={cn('tech-node absolute z-10 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border p-0 text-[11px] tabular-nums',tones[node.kind], bought ? 'border-current bg-panel-2' : available ? 'border-current bg-background' : 'border-border bg-background text-muted-foreground',active && 'ring-2 ring-ring ring-offset-2 ring-offset-background')}>
+          data-purchased={bought} style={{left:`${node.x}%`,top:`${node.y}%`}} className={cn('tech-node absolute z-10 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border p-0 text-[11px] tabular-nums', bought ? [tones[node.kind], 'border-current bg-panel-2 hover:text-inherit'] : 'border-border bg-background text-muted-foreground hover:text-muted-foreground',active && 'outline outline-1 outline-offset-2 outline-muted-foreground')}>
           {node.kind === 'warehouse' ? <Package className="size-3"/> : node.kind === 'market' ? <Store className="size-3"/> : node.level}
           {bought && <Check className="absolute -bottom-1 -right-1 size-2.5 rounded-full bg-background"/>}
         </Button>;
