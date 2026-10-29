@@ -164,16 +164,19 @@ export function GameMap(props: {
       if (cancelled || !map.current) return;
       cleanup();
       const T = TRAVEL_TRAIL;
+      const trailColor = props.state?.profile.color ?? T.color;
+
       m.addSource(id, { type: "geojson", lineMetrics: true, data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } } });
-      m.addLayer({ id: `${id}-glow`, type: "line", source: id, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": T.color, "line-width": T.glowWidth, "line-blur": T.glowWidth * 0.7, "line-opacity": 0.55 } });
-      m.addLayer({ id: `${id}-core`, type: "line", source: id, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": T.color, "line-width": T.coreWidth, "line-opacity": 1 } });
+      m.addLayer({ id: `${id}-glow`, type: "line", source: id, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": trailColor, "line-width": T.glowWidth, "line-blur": T.glowWidth * 0.7, "line-opacity": 0.55 } });
+      m.addLayer({ id: `${id}-core`, type: "line", source: id, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": trailColor, "line-width": T.coreWidth, "line-opacity": 1 } });
+
       const lngs = coords.map((c) => c[0]), lats = coords.map((c) => c[1]);
       m.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 120, maxZoom: 13, duration: 1200 });
       // Draw-in animation via line-gradient trim
       const drawMs = 1000, t0 = performance.now();
       const step = (now: number) => {
         const p = Math.min(1, (now - t0) / drawMs);
-        for (const l of [`${id}-glow`, `${id}-core`]) if (m.getLayer(l)) m.setPaintProperty(l, "line-gradient", p >= 1 ? ["interpolate", ["linear"], ["line-progress"], 0, T.color, 1, T.color] : ["step", ["line-progress"], T.color, Math.max(p, 0.0001), "rgba(0,0,0,0)"]);
+        for (const l of [`${id}-glow`, `${id}-core`]) if (m.getLayer(l)) m.setPaintProperty(l, "line-gradient", p >= 1 ? ["interpolate", ["linear"], ["line-progress"], 0, trailColor, 1, trailColor] : ["step", ["line-progress"], trailColor, Math.max(p, 0.0001), "rgba(0,0,0,0)"]);
         if (p < 1) raf = requestAnimationFrame(step);
       };
       raf = requestAnimationFrame(step);
