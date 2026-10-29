@@ -4,7 +4,7 @@ import type { GameConfig } from '@/game/api';
 import { travelPrice, foundingPrice, shipmentPrice, warehouseCapacity } from '@/game/economy';
 const cfg = fixture as GameConfig;
 describe('Authoritative economy previews', () => {
- it('prices geographical travel at 500 plus 45 per km', () => expect([10,50,100,200].map(km=>travelPrice(cfg,km))).toEqual([950,2750,5000,9500]));
+ it('prices geographical travel at 200 plus 400 per km', () => expect([2,10,30,100].map(km=>travelPrice(cfg,km))).toEqual([1000,4200,12200,40200]));
  it('prices founding progressively without a fixed post-eighth cost', () => expect([1,2,3,4,5,6,7,8,9].map(n=>foundingPrice(cfg,n))).toEqual([0,12000,30000,60000,100000,150000,210000,280000,360000]));
  it('applies transport discounts to total and rounds upward', () => expect([1,2,3].map(l=>shipmentPrice(cfg,100,40,l))).toEqual([770,616,501]));
  it('makes same-settlement shipment geographically free',()=>expect(shipmentPrice(cfg,0,40,1,true)).toBe(0));
