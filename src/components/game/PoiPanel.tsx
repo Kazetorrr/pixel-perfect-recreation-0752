@@ -30,7 +30,7 @@ export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; 
 
   const status = mine ? "Získáno vámi" : guildClaimed ? "Získáno vaší guildou" : "Nezískáno";
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="flex items-start gap-3 border-b p-4">
         <div className="grid size-12 place-items-center rounded-xl border-2 bg-panel-2" style={{ borderColor: RESOURCE_META[res].color, color: RESOURCE_META[res].color }}>
           <Mountain className="size-6" />
@@ -41,7 +41,7 @@ export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; 
         </div>
         <Button size="icon" variant="ghost" onClick={onClose} aria-label="Zavřít"><X /></Button>
       </div>
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
         <Section title="Údaje">
           <dl className="grid grid-cols-2 gap-y-1 text-sm">
             <dt className="text-muted-foreground">Kategorie</dt><dd className="text-right">{meta.label}</dd>
