@@ -51,7 +51,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
         onSelect={setSel} />
 
       {/* Left panel */}
-      <div className="absolute left-2 top-20 z-10 w-56 space-y-2 sm:left-4 sm:top-24">
+      <div className={cn("absolute left-2 top-20 z-10 w-56 space-y-2 sm:left-4 sm:top-24", (city || poi) && "hidden sm:block")}>
         <div className="panel p-2">
           <div className="flex items-center justify-between px-2 pb-1 pt-1 text-xs font-semibold text-muted-foreground">
             Zobrazení
@@ -111,7 +111,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
 
       {/* Right panel / mobile bottom sheet */}
       {(city || poi) && (
-        <aside className="panel absolute inset-x-2 bottom-20 z-30 max-h-[62dvh] overflow-hidden sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-20 sm:max-h-none sm:w-[400px]">
+        <aside className="panel absolute inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] top-20 z-30 flex flex-col overflow-hidden sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-20 sm:w-[400px]">
           {city && <CityPanel key={city.id} city={city} cities={memoCities} state={state} guild={guild} owners={settlements.data?.find((x) => x.city_id === city.id)?.owners ?? []} onClose={() => setSel(null)} />}
           {poi && <PoiPanel key={poi.id} poi={poi} state={state} onClose={() => setSel(null)} />}
         </aside>
