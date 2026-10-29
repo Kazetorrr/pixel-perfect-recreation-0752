@@ -48,7 +48,7 @@ export function GameMap(props: {
   cities: City[];
   pois: Poi[];
   state: GameState | null;
-  settlements?: Settlement[];
+  settlements?: Settlement[] | undefined;
   resFilter: Record<Resource, boolean>;
   catFilter: Record<Category, boolean>;
   showProd?: boolean;
