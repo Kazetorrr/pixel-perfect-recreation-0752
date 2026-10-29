@@ -29,6 +29,20 @@
       "when": 1793286346210,
       "tag": "0003_poi_detail_guild_claim",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793301525238,
+      "tag": "0004_real_steps_economy",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793301697793,
+      "tag": "0005_verified_steps_daily_boundary",
+      "breakpoints": true
     }
   ]
 }

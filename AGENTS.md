@@ -14,3 +14,8 @@
 - Resources are stored as provenance lots (`resource_lots`, origin_user_id) so economist scoring credits original suppliers only on consumption in a claim.
 - `src/game/config.ts` holds presentation metadata only (Czech labels, colors, map style URL); never duplicate balance numbers there.
 - Dev simulators (steps, time advance, demo GPS) are gated by `game_config().dev_mode`; simulated claims are stored with verification='simulated' and shown on separate leaderboards.
+- Wallet, real walked totals and test totals are separate bigint fields; legacy SP fields are deprecated so migration cannot re-credit walking.
+- Starter inventory lives in separately tracked lots and only enters expedition consumption, never shipment provenance, to enforce non-transferability.
+- Fractional production is retained per building and allocated proportionally against shared storage; settle before every capacity-changing action to avoid polling-dependent production.
+- `economy_settings.testing_enabled` gates all simulators server-side; privileged `set_testing_mode` is the single global launch switch, with shared testing enabled by default.
+- Client economy helpers derive previews only from RPC configuration; server RPCs remain authoritative, and shipment request IDs prevent repeat delivery.

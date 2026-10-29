@@ -8,13 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RESOURCES, RESOURCE_META, TIER_META, tierBonusText, fmt, haversineKm, type Resource } from "@/game/config";
 import { quoteShipment, useAction, type City, type GameState, type Guild, type SettlementOwner } from "@/game/api";
-import { ResCounters, ResDot, Section } from "./ui";
+import { travelPrice, foundingPrice } from "@/game/economy";
+import { ResCounters, ResDot, Section, StepAmount, MissingSteps } from "./ui";
 
 export function CityPanel({ city, cities, state, guild, owners = [], onClose }: { city: City; cities: City[]; state: GameState; guild: Guild | null | undefined; owners?: SettlementOwner[]; onClose: () => void }) {
   const cfg = state.config;
   const me = state.profile.id;
   const others = owners.filter((o) => o.id !== me);
-  const [who, setWho] = useState<string>(owners.some((o) => o.id === me) || others.length === 0 ? me : others[0]!.id);
+  const [who, setWho] = useState<string>(owners.some((o) => o.id === me) || others.length === 0 ? me : others[0]?.id ?? me);
   const viewed = who === me ? null : others.find((o) => o.id === who) ?? null;
   const pc = state.cities.find((c) => c.city_id === city.id);
   const isHere = state.profile.current_city_id === city.id;
@@ -22,8 +23,8 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
   const eff = (r: Resource) => Number(city[`eff_${r}` as const]);
   const bonus = cfg.tier_bonus?.[city.tier] ?? {};
   const rate = (r: Resource) => { const l = pc?.buildings[r]; return l ? (cfg.prod_per_level[l] ?? 0) * eff(r) * (1 + (bonus.production ?? 0)) : 0; };
-  const stored = pc ? RESOURCES.reduce((s, r) => s + (pc.inventory[r] ?? 0), 0) : 0;
-  const cap = pc ? (pc.capacity ?? pc.warehouse_level * cfg.warehouse_capacity_per_level) : 0;
+  const stored = pc?.used_capacity ?? 0;
+  const cap = pc ? (pc.capacity ?? cfg.warehouse_capacity[0]) : 0;
 
   const build = useAction<{ p_city: string; p_resource: Resource }>("build_or_upgrade", (d) =>
     (d as { level: number }).level === 1 ? "Budova postavena" : "Produkce vylepšena");
@@ -76,6 +77,7 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
           <div className="space-y-3">
             <EfficiencyBars city={city} />
             <TravelCard city={city} cities={cities} state={state} />
+            {isHere && <FoundingCard city={city} state={state} />}
           </div>
         ) : (
           <Tabs defaultValue="overview">
@@ -113,17 +115,18 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
                 return (
                   <div key={r} className="flex items-center gap-3 rounded-xl border bg-card/60 p-3">
                     <ResDot r={r} className="size-3" />
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{RESOURCE_META[r].label}</div>
                       <div className="text-xs text-muted-foreground">
                         {lvl ? `Úroveň ${lvl} · ${fmt(rate(r))}/den` : "Bez budovy"} · účinnost {Math.round(eff(r) * 100)} %
-                        {!max && lvl ? ` → ${fmt((cfg.prod_per_level[lvl + 1] ?? 0) * eff(r))}/den` : ""}
+                        {!max && lvl ? ` → ${fmt((cfg.prod_per_level[lvl + 1] ?? 0) * eff(r) * (1 + (bonus.production ?? 0)))}/den` : ""}
                       </div>
+                      {!max && <MissingSteps cost={cost ?? 0} balance={state.profile.wallet_steps} />}
                     </div>
-                    <Button size="sm" variant={lvl ? "secondary" : "default"} disabled={max || build.isPending || state.profile.sp_balance < (cost ?? 0)}
+                    <Button aria-label={`${lvl ? "Vylepšit" : "Postavit"} ${RESOURCE_META[r].label}`} size="sm" variant={lvl ? "secondary" : "default"} disabled={max || build.isPending || state.profile.wallet_steps < (cost ?? 0)}
                       onClick={() => build.mutate({ p_city: city.id, p_resource: r })}>
                       {lvl ? <ArrowUp /> : <Hammer />}
-                      {max ? "Max" : `${lvl ? "Vylepšit" : "Postavit"} · ${cost} SP`}
+                      {max ? "Max" : <StepAmount value={cost ?? 0} />}
                     </Button>
                   </div>
                 );
@@ -136,16 +139,16 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
                 <Progress value={(stored / cap) * 100} className="mb-3 h-1.5" />
                 <ResCounters inv={pc.inventory} />
               </Section>
-              <FacilityRow icon={<Package className="size-4" />} label="Sklad" level={pc.warehouse_level} max={cfg.max_level}
-                desc={`Kapacita ${fmt(cap)} jednotek`} cost={cfg.warehouse_upgrade_cost[pc.warehouse_level + 1]} sp={state.profile.sp_balance}
+              <FacilityRow icon={<Package className="size-4" />} label="Sklad" level={pc.warehouse_level} max={cfg.warehouse_max_level}
+                desc={`Kapacita ${fmt(cap)} jednotek`} cost={cfg.warehouse_upgrade_cost[pc.warehouse_level + 1]} sp={state.profile.wallet_steps}
                 pending={facility.isPending} onClick={() => facility.mutate({ p_city: city.id, p_kind: "warehouse" })} />
               <PrepareExpedition cityId={city.id} state={state} />
             </TabsContent>
 
             <TabsContent value="logistics" className="space-y-3">
-              <FacilityRow icon={<Store className="size-4" />} label="Tržiště" level={pc.market_level} max={cfg.max_level}
-                desc={pc.market_level ? `Sleva na přepravu ${Math.min(pc.market_level, 4) * cfg.market_discount_per_level * 100} %` : "Nepostaveno – přeprava za plnou cenu"}
-                cost={cfg.market_upgrade_cost[pc.market_level + 1]} sp={state.profile.sp_balance}
+              <FacilityRow icon={<Store className="size-4" />} label="Tržiště" level={pc.market_level} max={cfg.market_max_level}
+                desc={pc.market_level ? `Dnes odesláno ${pc.market_used}/${pc.market_capacity} · sleva ${Math.round((cfg.market_discount[Math.min(pc.market_level, cfg.market_max_level)] ?? 0) * 100)} %` : "Nepostaveno – odesílání není dostupné"}
+                cost={cfg.market_upgrade_cost[pc.market_level + 1]} sp={state.profile.wallet_steps}
                 pending={facility.isPending} onClick={() => facility.mutate({ p_city: city.id, p_kind: "market" })} />
               <ShipmentForm from={city} cities={cities} state={state} guild={guild} />
             </TabsContent>
@@ -183,9 +186,10 @@ function FacilityRow(p: { icon: React.ReactNode; label: string; level: number; m
       <div className="flex-1">
         <div className="text-sm font-semibold">{p.label} {p.level > 0 && <span className="text-muted-foreground">· úr. {p.level}</span>}</div>
         <div className="text-xs text-muted-foreground">{p.desc}</div>
+        {!maxed && <MissingSteps cost={p.cost ?? 0} balance={p.sp} />}
       </div>
-      <Button size="sm" variant="secondary" disabled={maxed || p.pending || p.sp < (p.cost ?? 0)} onClick={p.onClick}>
-        {maxed ? "Max" : `${p.level ? "Vylepšit" : "Postavit"} · ${p.cost} SP`}
+      <Button aria-label={`Vylepšit ${p.label}`} size="sm" variant="secondary" disabled={maxed || p.pending || p.sp < (p.cost ?? 0)} onClick={p.onClick}>
+        {maxed ? "Max" : <><ArrowUp /><StepAmount value={p.cost ?? 0} /></>}
       </Button>
     </div>
   );
@@ -193,22 +197,23 @@ function FacilityRow(p: { icon: React.ReactNode; label: string; level: number; m
 
 export function TravelCard({ city, cities, state }: { city: City; cities: City[]; state: GameState }) {
   const cfg = state.config;
-  const origin = cities.find((c) => c.id === state.profile.current_city_id)!;
-  const km = Math.round(haversineKm(origin, city) * cfg.travel_multiplier * 10) / 10;
-  const req = Math.ceil(km * cfg.sp_per_km);
+  const origin = cities.find((c) => c.id === state.profile.current_city_id);
+  const km = origin ? haversineKm(origin, city) : 0;
+  const req = travelPrice(cfg, km);
   const start = useAction<{ p_city: string }>("start_travel");
-  const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? `Dorazili jste do cíle` : "SP přidány k cestě"));
+  const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? `Dorazili jste do cíle` : "Kroky vloženy do cesty"));
   const t = state.travel;
 
+  if (!origin) return null;
   if (t) {
     const dest = cities.find((c) => c.id === t.to_city);
     return (
       <Section title="Probíhající cesta" right={`${dest?.name}`}>
-        <Progress value={(t.sp_paid / t.sp_required) * 100} className="mb-2 h-2" />
-        <div className="mb-3 text-xs text-muted-foreground">{fmt(t.sp_paid)} / {fmt(t.sp_required)} SP · {t.distance_km} km</div>
+        <Progress value={(t.paid_steps / t.required_steps) * 100} className="mb-2 h-2" />
+        <div className="mb-3 text-xs text-muted-foreground"><StepAmount value={t.paid_steps} /> / <StepAmount value={t.required_steps} /> · {fmt(t.distance_km)} km</div>
         <div className="flex gap-2">
-          <Button className="flex-1" disabled={fund.isPending || state.profile.sp_balance <= 0} onClick={() => fund.mutate({ p_amount: null })}>
-            <Footprints /> Přidat SP ({fmt(Math.min(state.profile.sp_balance, t.sp_required - t.sp_paid))})
+          <Button className="flex-1" disabled={fund.isPending || state.profile.wallet_steps <= 0} onClick={() => fund.mutate({ p_amount: null })}>
+            <Footprints /> Vložit {fmt(Math.min(state.profile.wallet_steps, t.required_steps - t.paid_steps))}
           </Button>
           <CancelTravel />
         </div>
@@ -220,13 +225,14 @@ export function TravelCard({ city, cities, state }: { city: City; cities: City[]
       <dl className="mb-3 grid grid-cols-2 gap-y-1 text-sm">
         <dt className="text-muted-foreground">Odkud</dt><dd className="text-right">{origin.name}</dd>
         <dt className="text-muted-foreground">Kam</dt><dd className="text-right">{city.name}</dd>
-        <dt className="text-muted-foreground">Virtuální vzdálenost</dt><dd className="text-right tabular-nums">{km} km</dd>
-        <dt className="text-muted-foreground">Potřeba SP</dt><dd className="text-right font-semibold tabular-nums">{fmt(req)}</dd>
-        <dt className="text-muted-foreground">Dostupné SP</dt><dd className="text-right tabular-nums">{fmt(state.profile.sp_balance)}</dd>
+        <dt className="text-muted-foreground">Přímá vzdálenost</dt><dd className="text-right tabular-nums">{km.toFixed(1)} km</dd>
+        <dt className="text-muted-foreground">Cena</dt><dd className="text-right font-semibold tabular-nums"><StepAmount value={req} /></dd>
+        <dt className="text-muted-foreground">Dostupné</dt><dd className="text-right tabular-nums"><StepAmount value={state.profile.wallet_steps} /></dd>
       </dl>
-      <Button className="w-full" disabled={start.isPending || fund.isPending}
-        onClick={async () => { await start.mutateAsync({ p_city: city.id }); if (state.profile.sp_balance > 0) fund.mutate({ p_amount: null }); }}>
-        <MapPin /> {state.profile.sp_balance >= req ? "Cestovat sem" : "Zahájit cestu a vložit dostupné SP"}
+      <MissingSteps cost={req} balance={state.profile.wallet_steps} />
+      <Button className="mt-2 w-full" disabled={start.isPending || fund.isPending}
+        onClick={async () => { await start.mutateAsync({ p_city: city.id }); if (state.profile.wallet_steps > 0) fund.mutate({ p_amount: null }); }}>
+        <MapPin /> {state.profile.wallet_steps >= req ? "Cestovat sem" : "Zahájit a vložit dostupné kroky"}
       </Button>
     </Section>
   );
@@ -271,14 +277,16 @@ function ShipmentForm({ from, cities, state, guild }: { from: City; cities: City
     return [own, ...(guild?.members.filter((m) => m.id !== me) ?? [])];
   }, [guild, state.cities, me]);
   const [rcpt, setRcpt] = useState(me);
-  const r = recipients.find((x) => x.id === rcpt) ?? recipients[0]!;
-  const destOptions = r.cities.filter((c) => !(rcpt === me && c === from.id));
+  const r = recipients.find((x) => x.id === rcpt) ?? recipients[0];
+  const destOptions = (r?.cities ?? []).filter((c) => !(rcpt === me && c === from.id));
   const [dest, setDest] = useState<string>("");
   const to = destOptions.includes(dest) ? dest : destOptions[0];
   const [res, setRes] = useState<Resource>("blue");
   const [qty, setQty] = useState(20);
-  const avail = state.cities.find((c) => c.city_id === from.id)?.inventory[res] ?? 0;
-  const quote = useQuery({ queryKey: ["quote", from.id, to, qty], enabled: !!to && qty > 0, queryFn: () => quoteShipment(from.id, to!, qty) });
+  const avail = state.cities.find((c) => c.city_id === from.id)?.transferable[res] ?? 0;
+  const sender = state.cities.find((c) => c.city_id === from.id);
+  const canSend = !!sender && sender.market_level > 0;
+  const quote = useQuery({ queryKey: ["quote", from.id, to, qty, sender?.market_level], enabled: canSend && !!to && qty > 0, queryFn: () => { if (!to) throw new Error("Zvolte cíl"); return quoteShipment(from.id, to, qty); } });
   const ship = useAction<{ p_from: string; p_to: string; p_resource: Resource; p_qty: number; p_recipient: string }>("send_shipment", "Přeprava dokončena");
   const destName = (id: string) => cities.find((c) => c.id === id)?.name ?? id;
 
@@ -290,7 +298,7 @@ function ShipmentForm({ from, cities, state, guild }: { from: City; cities: City
           <SelectContent>{recipients.map((m) => <SelectItem key={m.id} value={m.id}>{m.id === me ? "Do mého skladu" : `Člen guildy: ${m.username}`}</SelectItem>)}</SelectContent>
         </Select>
         {destOptions.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{rcpt === me ? "Nemáte jiný sklad. Docestujte do dalšího města." : "Příjemce nemá žádný sklad."}</p>
+          <p className="text-xs text-muted-foreground">{rcpt === me ? "Nemáte jiný sklad. Založte další sídlo." : "Příjemce nemá žádný sklad."}</p>
         ) : (
           <>
             <Select value={to ?? ""} onValueChange={setDest}>
@@ -302,11 +310,14 @@ function ShipmentForm({ from, cities, state, guild }: { from: City; cities: City
               <Input type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="w-24" />
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>K dispozici: {fmt(avail)}</span>
-              <span>Cena: <b className="text-foreground">{quote.data != null ? `${fmt(quote.data)} SP` : "…"}</b> / {fmt(state.profile.sp_balance)} SP</span>
+              <span>Přenosné: {fmt(avail)}</span>
+              <span>Cena: <b className="text-foreground">{quote.data != null ? <StepAmount value={quote.data} /> : "…"}</b> / <StepAmount value={state.profile.wallet_steps} /></span>
             </div>
-            <Button className="w-full" disabled={ship.isPending || qty <= 0 || qty > avail || (quote.data ?? Infinity) > state.profile.sp_balance}
-              onClick={() => ship.mutate({ p_from: from.id, p_to: to!, p_resource: res, p_qty: qty, p_recipient: rcpt })}>
+            {!canSend && <p className="text-xs text-destructive">Odesílání vyžaduje postavené tržiště, i v témže sídle.</p>}
+            {sender && <p className="text-xs text-muted-foreground">Denní kapacita: {sender.market_used}/{sender.market_capacity}</p>}
+            <MissingSteps cost={quote.data ?? 0} balance={state.profile.wallet_steps} />
+            <Button className="w-full" disabled={!canSend || qty > (sender ? sender.market_capacity - sender.market_used : 0) || ship.isPending || !Number.isInteger(qty) || qty <= 0 || qty > avail || (quote.data ?? Infinity) > state.profile.wallet_steps}
+              onClick={() => { if (!to) return; ship.mutate({ p_from: from.id, p_to: to, p_resource: res, p_qty: qty, p_recipient: rcpt }); }}>
               <Truck /> Odeslat {qty} {RESOURCE_META[res].genitive} zásob
             </Button>
           </>
@@ -351,8 +362,10 @@ function ShipToMember({ city, owner, state, cities }: { city: City; owner: Settl
   const [fromId, setFrom] = useState<string>(mine.find((c) => c.city_id === state.profile.current_city_id)?.city_id ?? mine[0]?.city_id ?? "");
   const [res, setRes] = useState<Resource>("blue");
   const [qty, setQty] = useState(20);
-  const avail = mine.find((c) => c.city_id === fromId)?.inventory[res] ?? 0;
-  const quote = useQuery({ queryKey: ["quote", fromId, city.id, qty], enabled: !!fromId && qty > 0, queryFn: () => quoteShipment(fromId, city.id, qty) });
+  const avail = mine.find((c) => c.city_id === fromId)?.transferable[res] ?? 0;
+  const sender = mine.find((c) => c.city_id === fromId);
+  const canSend = !!sender && sender.market_level > 0;
+  const quote = useQuery({ queryKey: ["quote", fromId, city.id, qty, sender?.market_level], enabled: canSend && !!fromId && qty > 0, queryFn: () => quoteShipment(fromId, city.id, qty) });
   const ship = useAction<{ p_from: string; p_to: string; p_resource: Resource; p_qty: number; p_recipient: string }>("send_shipment", "Přeprava dokončena");
   const name = (id: string) => cities.find((c) => c.id === id)?.name ?? id;
   if (!mine.length) return null;
@@ -368,14 +381,23 @@ function ShipToMember({ city, owner, state, cities }: { city: City; owner: Settl
           <Input type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="w-24" />
         </div>
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>K dispozici: {fmt(avail)}</span>
-          <span>Cena: <b className="text-foreground">{quote.data != null ? `${fmt(quote.data)} SP` : "…"}</b> / {fmt(state.profile.sp_balance)} SP</span>
+          <span>Přenosné: {fmt(avail)}</span>
+          <span>Cena: <b className="text-foreground">{quote.data != null ? <StepAmount value={quote.data} /> : "…"}</b> / <StepAmount value={state.profile.wallet_steps} /></span>
         </div>
-        <Button className="w-full" disabled={ship.isPending || qty <= 0 || qty > avail || (quote.data ?? Infinity) > state.profile.sp_balance}
+        {!canSend && <p className="text-xs text-destructive">Odesílání vyžaduje postavené tržiště, i v témže sídle.</p>}
+        {sender && <p className="text-xs text-muted-foreground">Denní kapacita: {sender.market_used}/{sender.market_capacity}</p>}
+        <MissingSteps cost={quote.data ?? 0} balance={state.profile.wallet_steps} />
+        <Button className="w-full" disabled={!canSend || qty > (sender ? sender.market_capacity - sender.market_used : 0) || ship.isPending || !Number.isInteger(qty) || qty <= 0 || qty > avail || (quote.data ?? Infinity) > state.profile.wallet_steps}
           onClick={() => ship.mutate({ p_from: fromId, p_to: city.id, p_resource: res, p_qty: qty, p_recipient: owner.id })}>
           <Truck /> Odeslat {qty} {RESOURCE_META[res].genitive} zásob
         </Button>
       </div>
     </Section>
   );
+}
+
+function FoundingCard({ city, state }: { city: City; state: GameState }) {
+  const cost = foundingPrice(state.config, state.profile.founded_count + 1);
+  const found = useAction<{ p_city: string }>("found_settlement", "Sídlo založeno");
+  return <Section title="Založit ekonomické sídlo"><p className="mb-2 text-sm text-muted-foreground">Sídlo č. {state.profile.founded_count + 1} · prázdný sklad {state.config.warehouse_capacity[0]}</p><MissingSteps cost={cost} balance={state.profile.wallet_steps} /><Button className="mt-2 w-full" disabled={found.isPending || !!state.travel || state.profile.wallet_steps < cost} onClick={() => found.mutate({ p_city: city.id })}><Building2 />Založit <StepAmount value={cost} /></Button></Section>;
 }

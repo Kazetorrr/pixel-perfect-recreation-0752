@@ -17,6 +17,8 @@ export const Route = createFileRoute("/guilda")({
       { name: "description", content: "Spravujte svou guildu, sdílejte zásoby a sledujte sezónní žebříčky guild, objevitelů a ekonomů." },
       { property: "og:title", content: "summ-it – guilda a žebříčky" },
       { property: "og:description", content: "Sezónní žebříčky guild, objevitelů a ekonomů." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => <GameShell>{(state, guild) => <GuildScreen state={state} guild={guild} />}</GameShell>,
@@ -89,7 +91,7 @@ function GuildDetail({ guild, state }: { guild: Guild; state: GameState }) {
           <ul className="space-y-1.5 text-sm">
             {guild.activity.map((a, i) => (
               <li key={i} className="flex items-center justify-between gap-2">
-                <span>{a.type === "claim" ? <><b>{a.user}</b> získal(a) {a.poi}</> : <><b>{a.user}</b> poslal(a) {a.qty} {RESOURCE_META[a.resource!].genitive} zásob hráči <b>{a.to}</b></>}</span>
+                <span>{a.type === "claim" ? <><b>{a.user}</b> získal(a) {a.poi}</> : <><b>{a.user}</b> poslal(a) {a.qty} {(a.resource ? RESOURCE_META[a.resource].genitive : "")} zásob hráči <b>{a.to}</b></>}</span>
                 {a.verification === "simulated" && <SimBadge />}
               </li>
             ))}
