@@ -31,7 +31,7 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
   const facility = useAction<{ p_city: string; p_kind: string }>("upgrade_facility", (_d, a) => (a.p_kind === "warehouse" ? "Sklad vylepšen" : "Tržiště vylepšeno"));
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="flex items-start gap-3 border-b p-4">
         <div className="grid size-12 place-items-center rounded-xl border bg-panel-2"><Building2 className="size-6 text-muted-foreground" /></div>
         <div className="min-w-0 flex-1">
@@ -44,7 +44,7 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
         <Button size="icon" variant="ghost" onClick={onClose} aria-label="Zavřít"><X /></Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
         {others.length > 0 && (
           <Section title={owners.length === 1 ? "Člen guildy zde má infrastrukturu" : `${owners.length} ${owners.length < 5 ? "členové" : "členů"} guildy zde ${owners.length < 5 ? "mají" : "má"} infrastrukturu`}>
             <div className="space-y-1">
