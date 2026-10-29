@@ -13,9 +13,9 @@ import { useAction, useCities, useLeaderboards, type GameState, type Guild } fro
 export const Route = createFileRoute("/guilda")({
   head: () => ({
     meta: [
-      { title: "Trekra – guilda a žebříčky" },
+      { title: "summ-it – guilda a žebříčky" },
       { name: "description", content: "Spravujte svou guildu, sdílejte zásoby a sledujte sezónní žebříčky guild, objevitelů a ekonomů." },
-      { property: "og:title", content: "Trekra – guilda a žebříčky" },
+      { property: "og:title", content: "summ-it – guilda a žebříčky" },
       { property: "og:description", content: "Sezónní žebříčky guild, objevitelů a ekonomů." },
     ],
   }),

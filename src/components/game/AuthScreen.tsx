@@ -35,7 +35,7 @@ export function AuthScreen() {
       <div className="panel relative w-full max-w-sm p-6">
         <div className="mb-6 flex items-center gap-3">
           <Mountain className="size-8 text-primary" />
-          <div><h1 className="text-2xl font-semibold">Trekra</h1><p className="text-sm text-muted-foreground">Choď, stav, objevuj.</p></div>
+          <div><h1 className="text-2xl font-semibold">summ-it</h1><p className="text-sm text-muted-foreground">Choď, stav, objevuj.</p></div>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1"><Label htmlFor="em">E-mail</Label><Input id="em" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>

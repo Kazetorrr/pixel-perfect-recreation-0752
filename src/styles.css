@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Trekra design system — dark strategy-map UI. All colors oklch. */
+/* summ-it design system — dark strategy-map UI. All colors oklch. */
 
 @theme inline {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;

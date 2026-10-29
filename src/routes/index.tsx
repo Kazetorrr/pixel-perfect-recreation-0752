@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Trekra – mapa | Strategie objevování Moravy" },
+      { title: "summ-it – mapa | Strategie objevování Česka" },
       { name: "description", content: "Choďte, budujte výrobu ve skutečných městech a získávejte vrcholy, zříceniny a rozhledny pro svou guildu." },
-      { property: "og:title", content: "Trekra – mapa" },
+      { property: "og:title", content: "summ-it – mapa" },
       { property: "og:description", content: "Ekonomická a průzkumná strategie na skutečné mapě Moravy." },
     ],
   }),
