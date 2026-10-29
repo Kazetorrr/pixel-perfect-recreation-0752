@@ -19,7 +19,7 @@ export function Onboarding() {
   const [guildVal, setGuildVal] = useState("");
   const [busy, setBusy] = useState(false);
   const [color, setColor] = useState(DEFAULT_PLAYER_COLOR);
-  const gs = useGameState();
+  const gs = useGameState(true);
   const palette = (gs.data?.config?.player_colors ?? [DEFAULT_PLAYER_COLOR]) as string[];
   const sel = cities.data?.find((c) => c.id === city);
 
