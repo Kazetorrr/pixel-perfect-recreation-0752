@@ -18,7 +18,9 @@ export const Route = createFileRoute("/")({
       { title: "summ-it – mapa | Strategie objevování Česka" },
       { name: "description", content: "Choďte, budujte výrobu ve skutečných městech a získávejte vrcholy, zříceniny a rozhledny pro svou guildu." },
       { property: "og:title", content: "summ-it – mapa" },
-      { property: "og:description", content: "Ekonomická a průzkumná strategie na skutečné mapě Moravy." },
+      { property: "og:description", content: "Ekonomická a průzkumná strategie na skutečné mapě Česka." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => <GameShell>{(state, guild) => <MapScreen state={state} guild={guild} />}</GameShell>,
@@ -34,7 +36,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
   const [listOpen, setListOpen] = useState(false);
   const [resFilter, setResFilter] = useState<Record<Resource, boolean>>({ blue: false, green: false, yellow: false, red: false });
   const [catFilter, setCatFilter] = useState<Record<Category, boolean>>({ peak: true, ruin: true, tower: true, monument: true });
-  const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? "Dorazili jste do cíle" : "SP přidány k cestě"));
+  const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? "Dorazili jste do cíle" : "Kroky vloženy do cesty"));
 
   const city = sel?.kind === "city" ? cities.data?.find((c) => c.id === sel.id) : undefined;
   const poi = sel?.kind === "poi" ? pois.data?.find((p) => p.id === sel.id) : undefined;
@@ -100,9 +102,9 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
         {t && (
           <div className="panel p-3">
             <div className="mb-1 flex items-center gap-2 text-xs font-semibold"><Footprints className="size-3.5 text-primary" /> Cesta do {memoCities.find((c) => c.id === t.to_city)?.name}</div>
-            <Progress value={(t.sp_paid / t.sp_required) * 100} className="mb-2 h-1.5" />
-            <button className="w-full rounded-md bg-primary py-1 text-xs font-semibold text-primary-foreground disabled:opacity-50" disabled={fund.isPending || state.profile.sp_balance <= 0}
-              onClick={() => fund.mutate({ p_amount: null })}>Přidat SP · {fmt(t.sp_paid)}/{fmt(t.sp_required)}</button>
+            <Progress value={(t.paid_steps / t.required_steps) * 100} className="mb-2 h-1.5" />
+            <button className="w-full rounded-md bg-primary py-1 text-xs font-semibold text-primary-foreground disabled:opacity-50" disabled={fund.isPending || state.profile.wallet_steps <= 0}
+              onClick={() => fund.mutate({ p_amount: null })}>Vložit kroky · {fmt(t.paid_steps)}/{fmt(t.required_steps)}</button>
           </div>
         )}
       </div>

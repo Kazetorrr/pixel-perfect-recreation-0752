@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/game/config";
 import { useAction, type GameState, type Guild } from "@/game/api";
-import { SimBadge } from "./ui";
+import { SimBadge, StepAmount } from "./ui";
 import logoTop from "@/assets/summit-logo-topbar.png";
 import logoTopIcon from "@/assets/summit-logo-topbar-icon.png";
 
@@ -47,41 +47,41 @@ export function TopBar({ state, guild }: { state: GameState; guild: Guild | null
 function StepPopover({ state }: { state: GameState }) {
   const p = state.profile;
   const [custom, setCustom] = useState(2500);
-  const grant = useAction<{ p_steps: number }>("dev_grant_steps", (d, a) => `+${fmt(a.p_steps)} kroků → +${fmt((d as { sp: number }).sp)} SP`);
+  const grant = useAction<{ p_steps: number }>("dev_grant_steps", (_d, a) => `+${fmt(a.p_steps)} testovacích kroků`);
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg px-1 text-left">
           <Footprints className="size-5 text-primary" />
-          <div className="leading-tight"><div className="text-[10px] text-muted-foreground">SP</div><div className="font-semibold tabular-nums">{fmt(p.sp_balance)}</div></div>
+          <div className="leading-tight"><div className="text-[10px] text-muted-foreground">Dostupné</div><div className="font-semibold tabular-nums">{fmt(p.wallet_steps)}</div></div>
           {state.config.dev_mode && <span className="ml-1 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">+ kroky</span>}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <div className="mb-2 flex items-center justify-between"><span className="font-semibold">Krokové body</span><SimBadge>Simulátor kroků</SimBadge></div>
         <dl className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="rounded-lg bg-muted p-2"><dt className="text-muted-foreground">Kroky</dt><dd className="font-semibold">{fmt(p.steps_total)}</dd></div>
-          <div className="rounded-lg bg-muted p-2"><dt className="text-muted-foreground">Dostupné SP</dt><dd className="font-semibold">{fmt(p.sp_balance)}</dd></div>
-          <div className="rounded-lg bg-muted p-2"><dt className="text-muted-foreground">Utracené SP</dt><dd className="font-semibold">{fmt(p.sp_spent)}</dd></div>
+          <div className="rounded-lg bg-muted p-2"><dt className="text-muted-foreground">Nachozeno</dt><dd className="font-semibold">{fmt(p.steps_total)}</dd></div>
+          <div className="rounded-lg bg-muted p-2"><dt className="text-muted-foreground">Dostupné</dt><dd className="font-semibold">{fmt(p.wallet_steps)}</dd></div>
+          <div className="rounded-lg bg-muted p-2"><dt className="text-muted-foreground">Utracené</dt><dd className="font-semibold">{fmt(p.spent_steps)}</dd></div>
         </dl>
         {state.config.dev_mode && (
           <>
-            <p className="mb-2 text-xs text-muted-foreground">Vývojový simulátor: {state.config.steps_per_sp} kroků = 1 SP. Skutečné kroky z telefonu budou doplněny později.</p>
+            <p className="mb-2 text-xs text-muted-foreground">Testovací kroky se připisují 1:1 a nejsou součástí skutečně nachozeného počtu.</p>
             <div className="mb-2 grid grid-cols-3 gap-2">
               {[1000, 5000, 10000].map((s) => <Button key={s} size="sm" variant="secondary" disabled={grant.isPending} onClick={() => grant.mutate({ p_steps: s })}>+{fmt(s)}</Button>)}
             </div>
             <div className="mb-3 flex gap-2">
-              <Input type="number" min={1} value={custom} onChange={(e) => setCustom(Number(e.target.value))} />
-              <Button size="sm" disabled={grant.isPending || custom <= 0} onClick={() => grant.mutate({ p_steps: custom })}>Přidat</Button>
+              <Input type="number" min={1} step={1} value={custom} onChange={(e) => setCustom(Number(e.target.value))} />
+              <Button size="sm" disabled={grant.isPending || custom <= 0 || !Number.isInteger(custom)} onClick={() => grant.mutate({ p_steps: custom })}>Přidat</Button>
             </div>
           </>
         )}
-        <div className="text-xs font-semibold text-muted-foreground">Poslední pohyby SP</div>
+        <div className="mb-2 text-xs text-muted-foreground">Testovací přírůstky: {fmt(p.test_steps)}</div><div className="text-xs font-semibold text-muted-foreground">Poslední pohyby</div>
         <ul className="mt-1 max-h-40 space-y-1 overflow-y-auto text-xs">
           {state.transactions.map((t, i) => (
             <li key={i} className="flex justify-between gap-2">
               <span className="truncate">{t.note}{t.simulated && " (sim.)"}</span>
-              <span className={t.sp >= 0 ? "text-res-green" : "text-destructive"}>{t.sp >= 0 ? "+" : ""}{fmt(t.sp)}</span>
+              <span className={t.delta_steps >= 0 ? "text-res-green" : "text-destructive"}>{t.delta_steps >= 0 ? "+" : "−"}<StepAmount value={Math.abs(t.delta_steps)} /></span>
             </li>
           ))}
         </ul>
