@@ -17,6 +17,7 @@ export type Database = {
       buildings: {
         Row: {
           city_id: string
+          fractional_qty: number
           last_settled_at: string
           level: number
           resource: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           city_id: string
+          fractional_qty?: number
           last_settled_at: string
           level?: number
           resource: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           city_id?: string
+          fractional_qty?: number
           last_settled_at?: string
           level?: number
           resource?: string
@@ -146,6 +149,21 @@ export type Database = {
           },
         ]
       }
+      economy_settings: {
+        Row: {
+          id: boolean
+          testing_enabled: boolean
+        }
+        Insert: {
+          id?: boolean
+          testing_enabled?: boolean
+        }
+        Update: {
+          id?: boolean
+          testing_enabled?: boolean
+        }
+        Relationships: []
+      }
       guilds: {
         Row: {
           created_at: string
@@ -173,6 +191,7 @@ export type Database = {
       player_cities: {
         Row: {
           city_id: string
+          explicitly_founded: boolean
           market_level: number
           unlocked_at: string
           user_id: string
@@ -180,6 +199,7 @@ export type Database = {
         }
         Insert: {
           city_id: string
+          explicitly_founded?: boolean
           market_level?: number
           unlocked_at?: string
           user_id: string
@@ -187,6 +207,7 @@ export type Database = {
         }
         Update: {
           city_id?: string
+          explicitly_founded?: boolean
           market_level?: number
           unlocked_at?: string
           user_id?: string
@@ -364,46 +385,67 @@ export type Database = {
           color: string
           created_at: string
           current_city_id: string | null
+          economy_migrated_at: string | null
+          founded_count: number
           guild_id: string | null
           guild_joined_at: string | null
           home_city_id: string | null
+          home_verified_at: string | null
           id: string
           sp_balance: number
           sp_spent: number
+          spent_steps: number
           step_remainder: number
           steps_total: number
+          test_steps: number
           time_offset_seconds: number
           username: string | null
+          walked_verified: number
+          wallet_steps: number
         }
         Insert: {
           color?: string
           created_at?: string
           current_city_id?: string | null
+          economy_migrated_at?: string | null
+          founded_count?: number
           guild_id?: string | null
           guild_joined_at?: string | null
           home_city_id?: string | null
+          home_verified_at?: string | null
           id: string
           sp_balance?: number
           sp_spent?: number
+          spent_steps?: number
           step_remainder?: number
           steps_total?: number
+          test_steps?: number
           time_offset_seconds?: number
           username?: string | null
+          walked_verified?: number
+          wallet_steps?: number
         }
         Update: {
           color?: string
           created_at?: string
           current_city_id?: string | null
+          economy_migrated_at?: string | null
+          founded_count?: number
           guild_id?: string | null
           guild_joined_at?: string | null
           home_city_id?: string | null
+          home_verified_at?: string | null
           id?: string
           sp_balance?: number
           sp_spent?: number
+          spent_steps?: number
           step_remainder?: number
           steps_total?: number
+          test_steps?: number
           time_offset_seconds?: number
           username?: string | null
+          walked_verified?: number
+          wallet_steps?: number
         }
         Relationships: [
           {
@@ -490,11 +532,13 @@ export type Database = {
       }
       shipments: {
         Row: {
+          cost_steps: number
           created_at: string
           from_city: string
           id: string
           qty: number
           recipient_id: string
+          request_id: string | null
           resource: string
           sender_id: string
           sp_cost: number
@@ -502,11 +546,13 @@ export type Database = {
           to_city: string
         }
         Insert: {
+          cost_steps?: number
           created_at?: string
           from_city: string
           id?: string
           qty: number
           recipient_id: string
+          request_id?: string | null
           resource: string
           sender_id: string
           sp_cost: number
@@ -514,11 +560,13 @@ export type Database = {
           to_city: string
         }
         Update: {
+          cost_steps?: number
           created_at?: string
           from_city?: string
           id?: string
           qty?: number
           recipient_id?: string
+          request_id?: string | null
           resource?: string
           sender_id?: string
           sp_cost?: number
@@ -556,9 +604,42 @@ export type Database = {
           },
         ]
       }
+      starter_lots: {
+        Row: {
+          city_id: string
+          holder_id: string
+          location: string
+          qty: number
+          resource: string
+        }
+        Insert: {
+          city_id?: string
+          holder_id: string
+          location: string
+          qty: number
+          resource: string
+        }
+        Update: {
+          city_id?: string
+          holder_id?: string
+          location?: string
+          qty?: number
+          resource?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "starter_lots_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       step_transactions: {
         Row: {
           created_at: string
+          delta_steps: number
           id: string
           kind: string
           note: string | null
@@ -569,6 +650,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delta_steps?: number
           id?: string
           kind: string
           note?: string | null
@@ -579,6 +661,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delta_steps?: number
           id?: string
           kind?: string
           note?: string | null
@@ -604,6 +687,8 @@ export type Database = {
           distance_km: number
           from_city: string
           id: string
+          paid_steps: number
+          required_steps: number
           sp_paid: number
           sp_required: number
           status: string
@@ -616,6 +701,8 @@ export type Database = {
           distance_km: number
           from_city: string
           id?: string
+          paid_steps?: number
+          required_steps?: number
           sp_paid?: number
           sp_required: number
           status?: string
@@ -628,6 +715,8 @@ export type Database = {
           distance_km?: number
           from_city?: string
           id?: string
+          paid_steps?: number
+          required_steps?: number
           sp_paid?: number
           sp_required?: number
           status?: string
@@ -658,6 +747,44 @@ export type Database = {
           },
         ]
       }
+      verified_step_events: {
+        Row: {
+          credited_steps: number
+          event_key: string
+          id: string
+          source: string
+          updated_at: string
+          user_id: string
+          walked_day: string
+        }
+        Insert: {
+          credited_steps?: number
+          event_key: string
+          id?: string
+          source: string
+          updated_at?: string
+          user_id: string
+          walked_day: string
+        }
+        Update: {
+          credited_steps?: number
+          event_key?: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+          walked_day?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_step_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -675,26 +802,48 @@ export type Database = {
         }
         Returns: undefined
       }
+      _add_starter: {
+        Args: {
+          p_city: string
+          p_loc: string
+          p_qty: number
+          p_res: string
+          p_uid: string
+        }
+        Returns: undefined
+      }
       _haversine_km: {
         Args: { a_lat: number; a_lng: number; b_lat: number; b_lng: number }
         Returns: number
       }
+      _market_capacity: {
+        Args: { p_city: string; p_uid: string }
+        Returns: number
+      }
+      _market_used: { Args: { p_city: string; p_uid: string }; Returns: number }
       _me: {
         Args: never
         Returns: {
           color: string
           created_at: string
           current_city_id: string | null
+          economy_migrated_at: string | null
+          founded_count: number
           guild_id: string | null
           guild_joined_at: string | null
           home_city_id: string | null
+          home_verified_at: string | null
           id: string
           sp_balance: number
           sp_spent: number
+          spent_steps: number
           step_remainder: number
           steps_total: number
+          test_steps: number
           time_offset_seconds: number
           username: string | null
+          walked_verified: number
+          wallet_steps: number
         }
         SetofOptions: {
           from: "*"
@@ -703,9 +852,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      _require_testing: { Args: never; Returns: undefined }
       _res_label: { Args: { r: string }; Returns: string }
       _settle: { Args: { p_city: string; p_uid: string }; Returns: undefined }
       _spend_sp: {
+        Args: {
+          p_amount: number
+          p_kind: string
+          p_note: string
+          p_uid: string
+        }
+        Returns: undefined
+      }
+      _spend_steps: {
         Args: {
           p_amount: number
           p_kind: string
@@ -723,6 +882,20 @@ export type Database = {
           p_res: string
         }
         Returns: Json
+      }
+      _take_supply: {
+        Args: {
+          p_city: string
+          p_loc: string
+          p_qty: number
+          p_res: string
+          p_uid: string
+        }
+        Returns: Json
+      }
+      _used_capacity: {
+        Args: { p_city: string; p_uid: string }
+        Returns: number
       }
       _virtual_km: { Args: { a: string; b: string }; Returns: number }
       _wh_cap: { Args: { p_city: string; p_uid: string }; Returns: number }
@@ -745,10 +918,32 @@ export type Database = {
         Args: { p_city: string; p_color?: string; p_username: string }
         Returns: undefined
       }
+      complete_onboarding_verified: {
+        Args: {
+          p_accuracy: number
+          p_city: string
+          p_color: string
+          p_lat: number
+          p_lng: number
+          p_username: string
+        }
+        Returns: undefined
+      }
       create_guild: { Args: { p_name: string }; Returns: Json }
+      credit_verified_steps: {
+        Args: {
+          p_cumulative_steps: number
+          p_day: string
+          p_event_key: string
+          p_source: string
+          p_user: string
+        }
+        Returns: number
+      }
       dev_advance_day: { Args: never; Returns: undefined }
       dev_grant_steps: { Args: { p_steps: number }; Returns: Json }
       dev_reset: { Args: never; Returns: undefined }
+      found_settlement: { Args: { p_city: string }; Returns: Json }
       fund_travel: { Args: { p_amount: number }; Returns: Json }
       game_config: { Args: never; Returns: Json }
       get_guild: { Args: never; Returns: Json }
@@ -779,8 +974,21 @@ export type Database = {
         }
         Returns: Json
       }
+      send_shipment_safe: {
+        Args: {
+          p_from: string
+          p_qty: number
+          p_recipient: string
+          p_request_id: string
+          p_resource: string
+          p_to: string
+        }
+        Returns: Json
+      }
       set_player_color: { Args: { p_color: string }; Returns: undefined }
+      set_testing_mode: { Args: { p_enabled: boolean }; Returns: undefined }
       start_travel: { Args: { p_city: string }; Returns: Json }
+      testing_enabled: { Args: never; Returns: boolean }
       upgrade_facility: {
         Args: { p_city: string; p_kind: string }
         Returns: Json
