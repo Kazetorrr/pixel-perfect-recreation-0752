@@ -2,21 +2,29 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { CATEGORY_META, MAP_CENTER, MAP_STYLE_URL, RESOURCES, RESOURCE_META, TIER_ICON, TRAVEL_TRAIL, DEFAULT_PLAYER_COLOR, type Category, type Resource } from "@/game/config";
-import type { City, GameState, Poi } from "@/game/api";
+import type { City, GameState, Poi, Settlement } from "@/game/api";
 
 export type Selection = { kind: "city"; id: string } | { kind: "poi"; id: string } | null;
 
-function citySvg(tier: keyof typeof TIER_ICON, owner: string | null, level: number, market: number) {
+function citySvg(tier: keyof typeof TIER_ICON, owners: string[], level: number, market: number, extra = 0) {
   const R = 19, C = 2 * Math.PI * R, segs = 5, gap = 3, len = C / segs - gap;
+  const owner = owners.length === 1 ? owners[0]! : null;
+  const shared = owners.length > 1;
   const ring = owner ? Array.from({ length: segs }, (_, i) =>
     `<circle cx="24" cy="24" r="${R}" fill="none" stroke="${owner}" stroke-width="3" stroke-linecap="round" opacity="${i < level ? 1 : 0.18}"
       stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-(i * C) / segs - C / 4 + gap / 2}" transform="rotate(0 24 24)"/>`).join("") : "";
-  const crown = owner && market > 0 ? `<g class="tk-crown" transform="translate(17 -1)"><path d="M1 9h12l-1-6-3 3-2-4-2 4-3-3z" fill="var(--panel-2)" stroke="${owner}" stroke-width="1.4" stroke-linejoin="round"/><text x="7" y="16" text-anchor="middle" font-size="6" fill="${owner}">${market}</text></g>` : "";
+  // Shared: equal arcs on the outline, one per owner, starting at 12 o'clock clockwise.
+  const r2 = 15, C2 = 2 * Math.PI * r2, n = owners.length, g2 = 2.2, l2 = C2 / n - g2;
+  const arcs = shared ? owners.map((col, i) =>
+    `<circle cx="24" cy="24" r="${r2}" fill="none" stroke="${col}" stroke-width="3" stroke-dasharray="${l2} ${C2 - l2}" stroke-dashoffset="${-(i * C2) / n - g2 / 2}" transform="rotate(-90 24 24)"/>`).join("") : "";
+  const mk = shared ? "oklch(0.8 0.005 230)" : owner;
+  const crown = mk && market > 0 ? `<g class="tk-crown" transform="translate(17 -1)"><path d="M1 9h12l-1-6-3 3-2-4-2 4-3-3z" fill="var(--panel-2)" stroke="${mk}" stroke-width="1.4" stroke-linejoin="round"/>${shared ? "" : `<text x="7" y="16" text-anchor="middle" font-size="6" fill="${mk}">${market}</text>`}</g>` : "";
+  const plus = extra > 0 ? `<g transform="translate(33 31)"><rect x="0" y="0" width="15" height="10" rx="5" fill="var(--panel-2)" stroke="oklch(0.6 0.01 230)" stroke-width="1"/><text x="7.5" y="7.6" text-anchor="middle" font-size="7" font-weight="700" fill="oklch(0.9 0.005 230)">+${extra}</text></g>` : "";
   return `<svg width="48" height="48" viewBox="0 -2 48 50" overflow="visible">
-    <circle cx="24" cy="24" r="15" fill="var(--panel-2)" stroke="${owner ?? "oklch(0.55 0.01 230)"}" stroke-width="2"/>
-    ${ring}
+    <circle cx="24" cy="24" r="15" fill="var(--panel-2)" stroke="${shared ? "none" : (owner ?? "oklch(0.55 0.01 230)")}" stroke-width="2"/>
+    ${ring}${arcs}
     <g transform="translate(15 15) scale(0.75)" fill="none" stroke="oklch(0.78 0.005 230)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${TIER_ICON[tier]}</g>
-    ${crown}</svg>`;
+    ${crown}${plus}</svg>`;
 }
 const ICONS: Record<Category, string> = {
   peak: `<path d="m3 20 6-11 4 6 3-4 5 9z"/>`,
@@ -40,6 +48,7 @@ export function GameMap(props: {
   cities: City[];
   pois: Poi[];
   state: GameState | null;
+  settlements?: Settlement[];
   resFilter: Record<Resource, boolean>;
   catFilter: Record<Category, boolean>;
   showProd?: boolean;
@@ -114,11 +123,16 @@ export function GameMap(props: {
           return `<div class="tk-bar"><i style="width:${Math.round(eff * 40)}px;background:${RESOURCE_META[r].color}"></i>${Math.round(eff * 100)}%</div>`;
         }).join("");
         const card = isSel || bars ? `<div class="tk-city-card">${isSel ? c.name : ""}${bars}</div>` : "";
-        const pc = st?.cities.find((x) => x.city_id === c.id);
-        const owner = pc ? (st?.profile.color ?? DEFAULT_PLAYER_COLOR) : null;
-        const lvl = pc ? Math.max(0, ...Object.values(pc.buildings).map(Number)) : 0;
-        if (owner) node.style.setProperty("--owner", owner);
-        node.innerHTML = `<div class="tk-city-dot">${citySvg(c.tier ?? "town", owner, lvl, pc?.market_level ?? 0)}</div>${card}`;
+        const os = props.settlements?.find((x) => x.city_id === c.id)?.owners ?? [];
+        const meId = st?.profile.id;
+        const colors = os.map((o) => (o.id === meId ? (st?.profile.color ?? o.color) : o.color) || DEFAULT_PLAYER_COLOR);
+        const shown = colors.slice(0, 4);
+        const solo = os.length === 1 ? os[0]! : null;
+        const lvl = solo ? Math.max(0, ...Object.values(solo.buildings).map(Number)) : 0;
+        const market = os.some((o) => o.market_level > 0) ? (solo?.market_level ?? 1) : 0;
+        node.dataset["owned"] = String(os.length > 0);
+        if (shown[0]) node.style.setProperty("--owner", shown[0]);
+        node.innerHTML = `<div class="tk-city-dot">${citySvg(c.tier ?? "town", shown, lvl, market, os.length - shown.length)}</div>${card}`;
         node.title = c.name;
         node.addEventListener("click", (e) => { e.stopPropagation(); onSelectRef.current({ kind: "city", id: c.id }); });
         markers.current.push(new ml.Marker({ element: node, anchor: "left", offset: [-24, 0] }).setLngLat([c.lng, c.lat]).addTo(m));
@@ -138,7 +152,7 @@ export function GameMap(props: {
         markers.current.push(new ml.Marker({ element: node }).setLngLat([p.lng, p.lat]).addTo(m));
       }
     }
-  }, [ready, props.layer, props.cities, props.pois, props.state, props.resFilter, props.catFilter, props.selection]);
+  }, [ready, props.layer, props.cities, props.pois, props.state, props.settlements, props.resFilter, props.catFilter, props.selection]);
 
   // Glowing trail after travel: detect arrival via current_city_id change
   const prevCity = useRef<string | null | undefined>(undefined);

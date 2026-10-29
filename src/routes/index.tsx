@@ -9,7 +9,7 @@ import { CityPanel } from "@/components/game/CityPanel";
 import { PoiPanel } from "@/components/game/PoiPanel";
 import { ResCounters } from "@/components/game/ui";
 import { CATEGORIES, CATEGORY_META, RESOURCES, RESOURCE_META, fmt, type Category, type Resource } from "@/game/config";
-import { useCities, useAction, usePois, type GameState, type Guild } from "@/game/api";
+import { useCities, useAction, usePois, useSettlements, type GameState, type Guild } from "@/game/api";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -27,6 +27,7 @@ export const Route = createFileRoute("/")({
 function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | undefined }) {
   const cities = useCities();
   const pois = usePois();
+  const settlements = useSettlements(true);
   const [layer, setLayer] = useState<"economy" | "exploration">("economy");
   const [sel, setSel] = useState<Selection>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -44,7 +45,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
 
   return (
     <>
-      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} selection={sel}
+      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} settlements={settlements.data} resFilter={resFilter} catFilter={catFilter} selection={sel}
         onSelect={setSel} />
 
       {/* Left panel */}
@@ -109,7 +110,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
       {/* Right panel / mobile bottom sheet */}
       {(city || poi) && (
         <aside className="panel absolute inset-x-2 bottom-20 z-30 max-h-[62dvh] overflow-hidden sm:inset-x-auto sm:bottom-4 sm:right-4 sm:top-20 sm:max-h-none sm:w-[400px]">
-          {city && <CityPanel key={city.id} city={city} cities={memoCities} state={state} guild={guild} onClose={() => setSel(null)} />}
+          {city && <CityPanel key={city.id} city={city} cities={memoCities} state={state} guild={guild} owners={settlements.data?.find((x) => x.city_id === city.id)?.owners ?? []} onClose={() => setSel(null)} />}
           {poi && <PoiPanel key={poi.id} poi={poi} state={state} onClose={() => setSel(null)} />}
         </aside>
       )}
