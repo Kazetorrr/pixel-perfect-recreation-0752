@@ -35,8 +35,11 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
 }
 
 // Travel trail shown briefly on the map after arriving in a city (presentation only).
+// The trail is drawn in the player's profile color; `color` is only the fallback
+// used before the profile is loaded.
 export const TRAVEL_TRAIL = {
   color: "#22d3ee",
+
   coreWidth: 3,
   glowWidth: 14,
   holdMs: 2500,
