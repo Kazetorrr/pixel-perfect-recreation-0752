@@ -918,6 +918,10 @@ export type Database = {
         Args: { p_city: string; p_color?: string; p_username: string }
         Returns: undefined
       }
+      complete_onboarding_test: {
+        Args: { p_city: string; p_color: string; p_username: string }
+        Returns: undefined
+      }
       complete_onboarding_verified: {
         Args: {
           p_accuracy: number

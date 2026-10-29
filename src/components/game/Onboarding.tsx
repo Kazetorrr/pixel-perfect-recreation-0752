@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RESOURCES, RESOURCE_META } from "@/game/config";
 import { useCities, useGameState } from "@/game/api";
 import { DEFAULT_PLAYER_COLOR, TIER_META } from "@/game/config";
+import { FlaskConical } from "lucide-react";
 
 export function Onboarding() {
   const cities = useCities();
@@ -21,6 +22,7 @@ export function Onboarding() {
   const [color, setColor] = useState(DEFAULT_PLAYER_COLOR);
   const gs = useGameState(true);
   const palette = ((gs.data as { config?: { player_colors?: string[] } } | undefined)?.config?.player_colors ?? [DEFAULT_PLAYER_COLOR]) as string[];
+  const testingEnabled = (gs.data as { config?: { dev_mode?: boolean } } | undefined)?.config?.dev_mode === true;
   const sel = cities.data?.find((c) => c.id === city);
   const [q, setQ] = useState("");
   const shown = useMemo(() => {
@@ -31,16 +33,25 @@ export function Onboarding() {
     return [...list].sort((a, b) => rank[a.tier] - rank[b.tier] || a.name.localeCompare(b.name, "cs")).slice(0, 150);
   }, [cities.data, q]);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const testOnly = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-test-onboarding') === 'true';
+    if (testOnly && !testingEnabled) return;
     setBusy(true);
-    let position: GeolocationPosition;
+    let position: GeolocationPosition | undefined;
+    if (!testOnly) {
     try {
       position = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
     } catch {
       setBusy(false); toast.error("Pro ověření domovského sídla povolte přístup k poloze."); return;
     }
-    const { error } = await supabase.rpc("complete_onboarding_verified", { p_username: name, p_city: city, p_color: color, p_lat: position.coords.latitude, p_lng: position.coords.longitude, p_accuracy: position.coords.accuracy });
+    }
+    const result = testOnly
+      ? await supabase.rpc("complete_onboarding_test", { p_username: name, p_city: city, p_color: color })
+      : position
+        ? await supabase.rpc("complete_onboarding_verified", { p_username: name, p_city: city, p_color: color, p_lat: position.coords.latitude, p_lng: position.coords.longitude, p_accuracy: position.coords.accuracy })
+        : { error: { message: "Poloha není dostupná." } };
+    const { error } = result;
     if (error) { setBusy(false); toast.error(error.message); return; }
     if (guildMode !== "none" && guildVal.trim()) {
       const r = guildMode === "create"
@@ -95,6 +106,7 @@ export function Onboarding() {
         </div>
         <p className="text-xs text-muted-foreground">Domov je trvalý a ověřuje se polohou. Začínáte bez budov se 70 zásobami ve skladu o kapacitě 110.</p>
         <Button type="submit" className="w-full" disabled={busy}>{busy ? "Ověřuji polohu…" : "Ověřit domov a začít"}</Button>
+        {testingEnabled && <Button type="submit" data-test-onboarding="true" variant="secondary" className="w-full" disabled={busy}><FlaskConical/>Založit testovací profil bez GPS</Button>}
       </form>
     </div>
   );

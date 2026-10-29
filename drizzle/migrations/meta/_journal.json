@@ -64,6 +64,13 @@
       "when": 1793310501320,
       "tag": "0008_qualify_expedition_inventory_totals",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793311098323,
+      "tag": "0009_test_onboarding_without_gps",
+      "breakpoints": true
     }
   ]
 }

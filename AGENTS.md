@@ -21,3 +21,4 @@
 - Client economy helpers derive previews only from RPC configuration; server RPCs remain authoritative, and shipment request IDs prevent repeat delivery.
 - City detail keeps upgrade-tree presentation and expedition supply controls in separate components; both use RPC configuration and authoritative actions to avoid duplicating balance rules.
 - Expedition supplies move through prepare_expedition_gps as one atomic multi-resource action with owned-city and physical-location checks; the legacy remote-loading RPC is disabled to close bypass paths.
+- Test onboarding uses a dedicated RPC gated by the global testing switch, reuses atomic onboarding validation/allocation and leaves home_verified_at null; it must never bypass account authentication or affect expedition GPS rules.
