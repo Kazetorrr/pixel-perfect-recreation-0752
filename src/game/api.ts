@@ -12,22 +12,22 @@ export type City = {
 };
 export type Poi = { id: string; osm_id: string; name: string; category: Category; lat: number; lng: number; elevation: number | null; osm_tags: string | null };
 export type Inv = Partial<Record<Resource, number>>;
-export type PlayerCity = { city_id: string; warehouse_level: number; market_level: number; capacity?: number; buildings: Partial<Record<Resource, number>>; inventory: Inv };
+export type PlayerCity = { city_id: string; warehouse_level: number; market_level: number; capacity: number; used_capacity: number; market_capacity: number; market_used: number; transferable: Inv; buildings: Partial<Record<Resource, number>>; inventory: Inv };
 export type GameConfig = {
-  dev_mode: boolean; steps_per_sp: number; max_level: number; prod_per_level: number[]; build_cost: number; upgrade_cost: number[];
-  warehouse_capacity_per_level: number; warehouse_upgrade_cost: number[]; market_upgrade_cost: number[];
-  travel_multiplier: number; sp_per_km: number; transport_sp_per_unit_km: number; market_discount_per_level: number;
+  dev_mode: boolean; max_level: number; prod_per_level: number[]; build_cost: number; upgrade_cost: number[];
+  warehouse_capacity: number[]; warehouse_max_level: number; warehouse_upgrade_cost: number[]; market_upgrade_cost: number[]; market_max_level: number; market_capacity: number[]; market_discount: number[];
+  travel_base: number; travel_per_km: number; shipment_base: number; shipment_per_km: number; shipment_per_unit: number; founding_second: number; founding_factor: number; home_radius_km: Record<Tier, number>;
   expedition_capacity: number; poi_cost: Record<Category, number>; gps_radius_m: number; gps_max_accuracy_m: number; guild_max_members: number;
   tier_bonus: Record<Tier, { production?: number; warehouse?: number; logistics?: number }>; player_colors: string[];
 };
 export type GameState = {
   onboarded: boolean;
-  profile: { id: string; username: string; home_city_id: string; current_city_id: string; color: string; guild_id: string | null; steps_total: number; sp_balance: number; sp_spent: number; time_offset_seconds: number };
+  profile: { id: string; username: string; home_city_id: string; current_city_id: string; color: string; guild_id: string | null; steps_total: number; test_steps: number; wallet_steps: number; spent_steps: number; founded_count: number; time_offset_seconds: number };
   cities: PlayerCity[];
   expedition: Inv;
-  travel: { id: string; from_city: string; to_city: string; distance_km: number; sp_required: number; sp_paid: number } | null;
-  transactions: { kind: string; steps: number; sp: number; note: string; simulated: boolean; created_at: string }[];
-  shipments: { id: string; from_city: string; to_city: string; resource: Resource; qty: number; sp_cost: number; created_at: string; direction: "in" | "out" | "internal"; sender: string; recipient: string }[];
+  travel: { id: string; from_city: string; to_city: string; distance_km: number; required_steps: number; paid_steps: number } | null;
+  transactions: { kind: string; steps: number; delta_steps: number; note: string; simulated: boolean; created_at: string }[];
+  shipments: { id: string; from_city: string; to_city: string; resource: Resource; qty: number; cost_steps: number; created_at: string; direction: "in" | "out" | "internal"; sender: string; recipient: string }[];
   my_claims: string[];
   guild_claims: string[];
   season: { name: string; starts_at: string; ends_at: string } | null;
@@ -112,7 +112,9 @@ export const quoteShipment = (from: string, to: string, qty: number) => rpc<numb
 export function useAction<A extends Record<string, unknown>>(fn: string, success?: string | ((data: unknown, args: A) => string)) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: A) => rpc<unknown>(fn, args),
+    mutationFn: (args: A) => fn === 'send_shipment'
+      ? rpc<unknown>('send_shipment_safe', { ...args, p_request_id: typeof args['p_request_id'] === 'string' ? args['p_request_id'] : crypto.randomUUID() })
+      : rpc<unknown>(fn, args),
     onSuccess: (data, args) => {
       const msg = typeof success === "function" ? success(data, args) : success;
       if (msg) toast.success(msg);

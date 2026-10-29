@@ -58,8 +58,8 @@ export const TIER_META: Record<Tier, { label: string }> = {
 export function tierBonusText(t: Tier, b: { production?: number; warehouse?: number; logistics?: number }) {
   const pct = (v?: number) => `+${Math.round((v ?? 0) * 100)} %`;
   if (t === "village") return `${pct(b.production)} základní produkce`;
-  if (t === "town") return `${pct(b.warehouse)} kapacita skladu`;
-  return `${pct(b.logistics)} kapacita logistiky (levnější přeprava z tohoto města)`;
+  if (t === "town") return `${pct(b.warehouse)} kapacita získaná vylepšením skladu`;
+  return `${pct(b.logistics)} denní odchozí kapacita tržiště`;
 }
 export const DEFAULT_PLAYER_COLOR = "#3b82f6";
 

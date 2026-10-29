@@ -1,6 +1,15 @@
 import { RESOURCE_META, RESOURCES, fmt, type Resource } from "@/game/config";
 import type { Inv } from "@/game/api";
 import { cn } from "@/lib/utils";
+import { Footprints } from "lucide-react";
+
+export function StepAmount({ value }: { value: number }) {
+  return <span className="inline-flex items-center gap-1 whitespace-nowrap tabular-nums"><Footprints aria-label="kroky" className="size-3.5 shrink-0" />{fmt(value)}</span>;
+}
+
+export function MissingSteps({ cost, balance }: { cost: number; balance: number }) {
+  return cost > balance ? <p className="mt-1 text-xs text-destructive">Chybí <StepAmount value={cost - balance} /></p> : null;
+}
 
 export function ResDot({ r, className }: { r: Resource; className?: string }) {
   return <span className={cn("inline-block size-2.5 shrink-0 rounded-full", className)} style={{ background: RESOURCE_META[r].color }} />;

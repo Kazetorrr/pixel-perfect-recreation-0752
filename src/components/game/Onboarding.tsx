@@ -34,7 +34,13 @@ export function Onboarding() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.rpc("complete_onboarding", { p_username: name, p_city: city, p_color: color });
+    let position: GeolocationPosition;
+    try {
+      position = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
+    } catch {
+      setBusy(false); toast.error("Pro ověření domovského sídla povolte přístup k poloze."); return;
+    }
+    const { error } = await supabase.rpc("complete_onboarding_verified", { p_username: name, p_city: city, p_color: color, p_lat: position.coords.latitude, p_lng: position.coords.longitude, p_accuracy: position.coords.accuracy });
     if (error) { setBusy(false); toast.error(error.message); return; }
     if (guildMode !== "none" && guildVal.trim()) {
       const r = guildMode === "create"
@@ -42,7 +48,7 @@ export function Onboarding() {
         : await supabase.rpc("join_guild", { p_code: guildVal });
       if (r.error) toast.error(`Guilda: ${r.error.message}`); else toast.success(guildMode === "create" ? "Guilda založena" : "Připojili jste se ke guildě");
     }
-    toast.success("Vítejte v Trekře!");
+    toast.success("Vítejte v summ-it!");
     await qc.invalidateQueries();
     setBusy(false);
   };
@@ -87,8 +93,8 @@ export function Onboarding() {
           </div>
           {guildMode !== "none" && <Input placeholder={guildMode === "create" ? "Název guildy" : "Kód pozvánky"} value={guildVal} onChange={(e) => setGuildVal(e.target.value)} />}
         </div>
-        <p className="text-xs text-muted-foreground">Na startu dostanete sklad, modrou výrobnu, základní zásoby a testovací SP.</p>
-        <Button type="submit" className="w-full" disabled={busy}>Začít hrát</Button>
+        <p className="text-xs text-muted-foreground">Domov je trvalý a ověřuje se polohou. Začínáte bez budov se 70 zásobami ve skladu o kapacitě 110.</p>
+        <Button type="submit" className="w-full" disabled={busy}>{busy ? "Ověřuji polohu…" : "Ověřit domov a začít"}</Button>
       </form>
     </div>
   );
