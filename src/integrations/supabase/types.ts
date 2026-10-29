@@ -960,6 +960,16 @@ export type Database = {
         Args: { p_city: string; p_qty: number; p_resource: string }
         Returns: undefined
       }
+      prepare_expedition_gps: {
+        Args: {
+          p_accuracy: number
+          p_amounts: Json
+          p_city: string
+          p_lat: number
+          p_lng: number
+        }
+        Returns: undefined
+      }
       quote_shipment: {
         Args: { p_from: string; p_qty: number; p_to: string }
         Returns: number

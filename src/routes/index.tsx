@@ -96,7 +96,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
           <div className={cn("panel p-3", !filtersOpen && "hidden sm:block")}>
             <div className="mb-2 flex justify-between text-xs font-semibold text-muted-foreground"><span>Expedice</span><span>{carried}/{state.config.expedition_capacity}</span></div>
             <ResCounters inv={state.expedition} className="grid-cols-2" />
-            <p className="mt-2 text-[11px] text-muted-foreground">Zásoby naložíte ve skladu města (záložka Sklad).</p>
+            <p className="mt-2 text-[11px] text-muted-foreground">Zásoby naložíte v okolí svého sídla (Logistika).</p>
           </div>
         )}
         {t && (

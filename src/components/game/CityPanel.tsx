@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, Building2, Crown, Footprints, Hammer, MapPin, Package, Store, Truck, X } from "lucide-react";
+import { Building2, Crown, Footprints, MapPin, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -10,6 +10,8 @@ import { RESOURCES, RESOURCE_META, TIER_META, tierBonusText, fmt, haversineKm, t
 import { quoteShipment, useAction, type City, type GameState, type Guild, type SettlementOwner } from "@/game/api";
 import { travelPrice, foundingPrice } from "@/game/economy";
 import { ResCounters, ResDot, Section, StepAmount, MissingSteps } from "./ui";
+import { UpgradeTree } from "./UpgradeTree";
+import { ExpeditionSupply } from "./ExpeditionSupply";
 
 export function CityPanel({ city, cities, state, guild, owners = [], onClose }: { city: City; cities: City[]; state: GameState; guild: Guild | null | undefined; owners?: SettlementOwner[]; onClose: () => void }) {
   const cfg = state.config;
@@ -25,10 +27,6 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
   const rate = (r: Resource) => { const l = pc?.buildings[r]; return l ? (cfg.prod_per_level[l] ?? 0) * eff(r) * (1 + (bonus.production ?? 0)) : 0; };
   const stored = pc?.used_capacity ?? 0;
   const cap = pc ? (pc.capacity ?? cfg.warehouse_capacity[0]) : 0;
-
-  const build = useAction<{ p_city: string; p_resource: Resource }>("build_or_upgrade", (d) =>
-    (d as { level: number }).level === 1 ? "Budova postavena" : "Produkce vylepšena");
-  const facility = useAction<{ p_city: string; p_kind: string }>("upgrade_facility", (_d, a) => (a.p_kind === "warehouse" ? "Sklad vylepšen" : "Tržiště vylepšeno"));
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
@@ -81,10 +79,9 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
           </div>
         ) : (
           <Tabs defaultValue="overview">
-            <TabsList className="mb-3 grid w-full grid-cols-4">
+            <TabsList className="mb-3 grid w-full grid-cols-3">
               <TabsTrigger value="overview">Přehled</TabsTrigger>
-              <TabsTrigger value="production">Produkce</TabsTrigger>
-              <TabsTrigger value="storage">Sklad</TabsTrigger>
+              <TabsTrigger value="upgrades">Vylepšení</TabsTrigger>
               <TabsTrigger value="logistics">Logistika</TabsTrigger>
             </TabsList>
 
@@ -107,50 +104,15 @@ export function CityPanel({ city, cities, state, guild, owners = [], onClose }: 
               {!isHere && <TravelCard city={city} cities={cities} state={state} />}
             </TabsContent>
 
-            <TabsContent value="production" className="space-y-2">
-              {RESOURCES.map((r) => {
-                const lvl = pc.buildings[r];
-                const max = lvl !== undefined && lvl >= cfg.max_level;
-                const cost = !lvl ? cfg.build_cost : cfg.upgrade_cost[lvl + 1];
-                return (
-                  <div key={r} className="flex items-center gap-3 rounded-xl border bg-card/60 p-3">
-                    <ResDot r={r} className="size-3" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{RESOURCE_META[r].label}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {lvl ? `Úroveň ${lvl} · ${fmt(rate(r))}/den` : "Bez budovy"} · účinnost {Math.round(eff(r) * 100)} %
-                        {!max && lvl ? ` → ${fmt((cfg.prod_per_level[lvl + 1] ?? 0) * eff(r) * (1 + (bonus.production ?? 0)))}/den` : ""}
-                      </div>
-                      {!max && <MissingSteps cost={cost ?? 0} balance={state.profile.wallet_steps} />}
-                    </div>
-                    <Button aria-label={`${lvl ? "Vylepšit" : "Postavit"} ${RESOURCE_META[r].label}`} size="sm" variant={lvl ? "secondary" : "default"} disabled={max || build.isPending || state.profile.wallet_steps < (cost ?? 0)}
-                      onClick={() => build.mutate({ p_city: city.id, p_resource: r })}>
-                      {lvl ? <ArrowUp /> : <Hammer />}
-                      {max ? "Max" : <StepAmount value={cost ?? 0} />}
-                    </Button>
-                  </div>
-                );
-              })}
-              <p className="pt-1 text-xs text-muted-foreground">Produkce běží i offline podle uplynulého času a zastaví se při plném skladu.</p>
-            </TabsContent>
-
-            <TabsContent value="storage" className="space-y-3">
-              <Section title="Zásoby ve skladu" right={`${fmt(stored)} / ${fmt(cap)}`}>
-                <Progress value={(stored / cap) * 100} className="mb-3 h-1.5" />
-                <ResCounters inv={pc.inventory} />
-              </Section>
-              <FacilityRow icon={<Package className="size-4" />} label="Sklad" level={pc.warehouse_level} max={cfg.warehouse_max_level}
-                desc={`Kapacita ${fmt(cap)} jednotek`} cost={cfg.warehouse_upgrade_cost[pc.warehouse_level + 1]} sp={state.profile.wallet_steps}
-                pending={facility.isPending} onClick={() => facility.mutate({ p_city: city.id, p_kind: "warehouse" })} />
-              <PrepareExpedition cityId={city.id} state={state} />
+            <TabsContent value="upgrades">
+              <UpgradeTree city={city} pc={pc} state={state} />
             </TabsContent>
 
             <TabsContent value="logistics" className="space-y-3">
-              <FacilityRow icon={<Store className="size-4" />} label="Tržiště" level={pc.market_level} max={cfg.market_max_level}
-                desc={pc.market_level ? `Dnes odesláno ${pc.market_used}/${pc.market_capacity} · sleva ${Math.round((cfg.market_discount[Math.min(pc.market_level, cfg.market_max_level)] ?? 0) * 100)} %` : "Nepostaveno – odesílání není dostupné"}
-                cost={cfg.market_upgrade_cost[pc.market_level + 1]} sp={state.profile.wallet_steps}
-                pending={facility.isPending} onClick={() => facility.mutate({ p_city: city.id, p_kind: "market" })} />
+              <h3 className="flex items-center gap-2 text-sm font-semibold"><Truck className="size-4" />Guildovní zásilky</h3>
+              <p className="text-xs text-muted-foreground">{pc.market_level ? `Tržiště úr. ${pc.market_level} · dnes odesláno ${pc.market_used}/${pc.market_capacity} · sleva ${Math.round((cfg.market_discount[Math.min(pc.market_level, cfg.market_max_level)] ?? 0)*100)} %` : "Tržiště není postaveno"}</p>
               <ShipmentForm from={city} cities={cities} state={state} guild={guild} />
+              <ExpeditionSupply city={city} pc={pc} state={state} />
             </TabsContent>
           </Tabs>
         )}
@@ -175,23 +137,6 @@ function EfficiencyBars({ city }: { city: City }) {
         })}
       </div>
     </Section>
-  );
-}
-
-function FacilityRow(p: { icon: React.ReactNode; label: string; level: number; max: number; desc: string; cost?: number | undefined; sp: number; pending: boolean; onClick: () => void }) {
-  const maxed = p.level >= p.max;
-  return (
-    <div className="flex items-center gap-3 rounded-xl border bg-card/60 p-3">
-      <div className="grid size-8 place-items-center rounded-lg bg-panel-2">{p.icon}</div>
-      <div className="flex-1">
-        <div className="text-sm font-semibold">{p.label} {p.level > 0 && <span className="text-muted-foreground">· úr. {p.level}</span>}</div>
-        <div className="text-xs text-muted-foreground">{p.desc}</div>
-        {!maxed && <MissingSteps cost={p.cost ?? 0} balance={p.sp} />}
-      </div>
-      <Button aria-label={`Vylepšit ${p.label}`} size="sm" variant="secondary" disabled={maxed || p.pending || p.sp < (p.cost ?? 0)} onClick={p.onClick}>
-        {maxed ? "Max" : <><ArrowUp /><StepAmount value={p.cost ?? 0} /></>}
-      </Button>
-    </div>
   );
 }
 
@@ -241,24 +186,6 @@ export function TravelCard({ city, cities, state }: { city: City; cities: City[]
 function CancelTravel() {
   const cancel = useAction<Record<string, never>>("cancel_travel", "Cesta zrušena");
   return <Button variant="ghost" disabled={cancel.isPending} onClick={() => cancel.mutate({})}>Zrušit</Button>;
-}
-
-function PrepareExpedition({ cityId, state }: { cityId: string; state: GameState }) {
-  const [res, setRes] = useState<Resource>("blue");
-  const [qty, setQty] = useState(25);
-  const prep = useAction<{ p_city: string; p_resource: Resource; p_qty: number }>("prepare_expedition", "Expedice připravena");
-  const carried = RESOURCES.reduce((s, r) => s + (state.expedition[r] ?? 0), 0);
-  const avail = state.cities.find((c) => c.city_id === cityId)?.inventory[res] ?? 0;
-  return (
-    <Section title="Připravit expedici" right={`Náklad ${carried} / ${state.config.expedition_capacity}`}>
-      <div className="flex gap-2">
-        <ResSelect value={res} onChange={setRes} />
-        <Input type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="w-24" />
-        <Button disabled={prep.isPending || qty <= 0 || qty > avail} onClick={() => prep.mutate({ p_city: cityId, p_resource: res, p_qty: qty })}>Naložit</Button>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">K dispozici {fmt(avail)} · naložené zásoby slouží k získávání lokalit.</p>
-    </Section>
-  );
 }
 
 function ResSelect({ value, onChange }: { value: Resource; onChange: (r: Resource) => void }) {
