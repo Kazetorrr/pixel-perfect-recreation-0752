@@ -42,7 +42,7 @@ export function Onboarding() {
   return (
     <div className="grid min-h-screen place-items-center p-4">
       <form onSubmit={submit} className="panel w-full max-w-md space-y-4 p-6">
-        <div><h1 className="text-2xl font-semibold">Založte si výpravu</h1><p className="text-sm text-muted-foreground">Zvolte jméno a domovské město.</p></div>
+        <div><h1 className="text-2xl font-semibold">Vítej, Cestovateli !</h1><p className="text-sm text-muted-foreground">Zvolte jméno a domovské město.</p></div>
         <div className="space-y-1"><Label htmlFor="un">Uživatelské jméno</Label><Input id="un" required minLength={3} maxLength={20} value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div className="space-y-1">
           <Label>Domovské město</Label>
