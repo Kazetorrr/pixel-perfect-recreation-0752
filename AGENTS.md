@@ -19,3 +19,5 @@
 - Fractional production is retained per building and allocated proportionally against shared storage; settle before every capacity-changing action to avoid polling-dependent production.
 - `economy_settings.testing_enabled` gates all simulators server-side; privileged `set_testing_mode` is the single global launch switch, with shared testing enabled by default.
 - Client economy helpers derive previews only from RPC configuration; server RPCs remain authoritative, and shipment request IDs prevent repeat delivery.
+- City detail keeps upgrade-tree presentation and expedition supply controls in separate components; both use RPC configuration and authoritative actions to avoid duplicating balance rules.
+- Expedition supplies move through prepare_expedition_gps as one atomic multi-resource action with owned-city and physical-location checks; the legacy remote-loading RPC is disabled to close bypass paths.
