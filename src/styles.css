@@ -74,7 +74,10 @@
   --sim: oklch(0.42 0.12 300 / 0.35);
   --sim-foreground: oklch(0.85 0.1 300);
   --shadow-panel: 0 10px 30px -12px oklch(0 0 0 / 0.6);
+  --shadow-upgrade-purchased: 0 0 8px 1px color-mix(in oklch, currentColor 35%, transparent);
 }
+
+.tech-node[data-purchased="true"] { box-shadow: var(--shadow-upgrade-purchased); }
 
 @layer base {
   * { border-color: var(--color-border); }
