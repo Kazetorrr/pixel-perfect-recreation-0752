@@ -33,3 +33,13 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
   const h = Math.sin(r(b.lat - a.lat) / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(r(b.lng - a.lng) / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+
+// Travel trail shown briefly on the map after arriving in a city (presentation only).
+export const TRAVEL_TRAIL = {
+  color: "#22d3ee",
+  coreWidth: 3,
+  glowWidth: 14,
+  holdMs: 2500,
+  fadeMs: 1200,
+  routingProfile: "foot", // OSRM profile for real paths; falls back to an arc
+};
