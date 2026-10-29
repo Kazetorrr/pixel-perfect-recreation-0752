@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Footprints, LogOut, Mountain, Shield, Wrench } from "lucide-react";
+import { Footprints, LogOut, Shield, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,13 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/game/config";
 import { useAction, type GameState, type Guild } from "@/game/api";
 import { SimBadge } from "./ui";
+import logoIcon from "@/assets/summit-logo-icon.png";
 
 export function TopBar({ state, guild }: { state: GameState; guild: Guild | null | undefined }) {
   const p = state.profile;
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-2 p-2 sm:p-4">
       <div className="panel pointer-events-auto flex items-center gap-3 px-3 py-2 sm:px-4">
-        <Mountain className="size-6 text-primary" />
+        <img src={logoIcon} alt="" className="size-7" />
         <div className="hidden leading-tight sm:block"><div className="font-display text-lg font-semibold">summ-it</div><div className="text-[10px] tracking-widest text-muted-foreground">BETA</div></div>
         <div className="mx-1 hidden h-8 w-px bg-border sm:block" />
         <StepPopover state={state} />
