@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { CATEGORY_META, MAP_CENTER, MAP_STYLE_URL, RESOURCES, RESOURCE_META, type Category, type Resource } from "@/game/config";
+import { CATEGORY_META, MAP_CENTER, MAP_STYLE_URL, RESOURCES, RESOURCE_META, TRAVEL_TRAIL, type Category, type Resource } from "@/game/config";
 import type { City, GameState, Poi } from "@/game/api";
 
 export type Selection = { kind: "city"; id: string } | { kind: "poi"; id: string } | null;
@@ -119,10 +119,76 @@ export function GameMap(props: {
     }
   }, [ready, props.layer, props.cities, props.pois, props.state, props.resFilter, props.catFilter, props.selection]);
 
+  // Glowing trail after travel: detect arrival via current_city_id change
+  const prevCity = useRef<string | null | undefined>(undefined);
+  const curCity = props.state?.profile.current_city_id ?? null;
+  useEffect(() => {
+    const prev = prevCity.current;
+    prevCity.current = curCity;
+    const m = map.current;
+    if (!m || !ready || prev === undefined || !prev || !curCity || prev === curCity) return;
+    const a = props.cities.find((c) => c.id === prev), b = props.cities.find((c) => c.id === curCity);
+    if (!a || !b) return;
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let raf = 0;
+    const id = "tk-trail";
+    const cleanup = () => {
+      cancelAnimationFrame(raf);
+      timers.forEach(clearTimeout);
+      try { for (const l of [`${id}-glow`, `${id}-core`]) if (m.getLayer(l)) m.removeLayer(l); if (m.getSource(id)) m.removeSource(id); } catch { /* map gone */ }
+    };
+    (async () => {
+      const coords = await fetchRoute([a.lng, a.lat], [b.lng, b.lat]);
+      if (cancelled || !map.current) return;
+      cleanup();
+      const T = TRAVEL_TRAIL;
+      m.addSource(id, { type: "geojson", lineMetrics: true, data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } } });
+      m.addLayer({ id: `${id}-glow`, type: "line", source: id, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": T.color, "line-width": T.glowWidth, "line-blur": T.glowWidth * 0.7, "line-opacity": 0.55 } });
+      m.addLayer({ id: `${id}-core`, type: "line", source: id, layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": T.color, "line-width": T.coreWidth, "line-opacity": 1 } });
+      const lngs = coords.map((c) => c[0]), lats = coords.map((c) => c[1]);
+      m.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 120, maxZoom: 13, duration: 1200 });
+      // Draw-in animation via line-gradient trim
+      const drawMs = 1000, t0 = performance.now();
+      const step = (now: number) => {
+        const p = Math.min(1, (now - t0) / drawMs);
+        for (const l of [`${id}-glow`, `${id}-core`]) if (m.getLayer(l)) m.setPaintProperty(l, "line-gradient", p >= 1 ? ["interpolate", ["linear"], ["line-progress"], 0, T.color, 1, T.color] : ["step", ["line-progress"], T.color, Math.max(p, 0.0001), "rgba(0,0,0,0)"]);
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+      timers.push(setTimeout(() => {
+        for (const l of [`${id}-glow`, `${id}-core`]) if (m.getLayer(l)) { m.setPaintProperty(l, "line-opacity-transition", { duration: T.fadeMs, delay: 0 }); m.setPaintProperty(l, "line-opacity", 0); }
+        timers.push(setTimeout(cleanup, T.fadeMs + 100));
+      }, drawMs + T.holdMs));
+    })();
+    return () => { cancelled = true; cleanup(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [curCity, ready]);
+
   return (
     <div className="absolute inset-0">
       <div ref={el} className="h-full w-full" />
       {styleNote && <div className="panel absolute bottom-20 left-3 px-3 py-1 text-xs text-muted-foreground sm:bottom-10">{styleNote}</div>}
     </div>
   );
+}
+
+async function fetchRoute(from: [number, number], to: [number, number]): Promise<[number, number][]> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const url = `https://router.project-osrm.org/route/v1/${TRAVEL_TRAIL.routingProfile}/${from[0]},${from[1]};${to[0]},${to[1]}?overview=full&geometries=geojson`;
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    const j = await r.json();
+    const c = j?.routes?.[0]?.geometry?.coordinates;
+    if (Array.isArray(c) && c.length > 1) return c;
+  } catch { /* fall back */ }
+  // Smooth arc fallback
+  const [x1, y1] = from, [x2, y2] = to;
+  const mx = (x1 + x2) / 2 - (y2 - y1) * 0.2, my = (y1 + y2) / 2 + (x2 - x1) * 0.2;
+  return Array.from({ length: 41 }, (_, i) => {
+    const t = i / 40, u = 1 - t;
+    return [u * u * x1 + 2 * u * t * mx + t * t * x2, u * u * y1 + 2 * u * t * my + t * t * y2] as [number, number];
+  });
 }
