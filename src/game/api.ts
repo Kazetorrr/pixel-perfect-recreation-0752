@@ -74,7 +74,7 @@ export const usePois = () =>
     if (error) throw error; return data as unknown as Poi[];
   } });
 export const useGameState = (enabled: boolean) =>
-  useQuery({ queryKey: ["state"], enabled, queryFn: () => rpc<GameState | { onboarded: false }>("get_state") });
+  useQuery({ queryKey: ["state"], enabled, refetchInterval: 20_000, refetchOnWindowFocus: true, queryFn: () => rpc<GameState | { onboarded: false }>("get_state") });
 export type SettlementOwner = { id: string; username: string; color: string; market_level: number; warehouse_level: number; buildings: Partial<Record<Resource, number>> };
 export type Settlement = { city_id: string; owners: SettlementOwner[] };
 /** Settlements with real infrastructure of me + my guild mates. Current player always first. */
@@ -90,6 +90,7 @@ export const useLeaderboards = (category: string, verification: string) =>
 export const usePoiDetail = (poi: string | null) =>
   useQuery({ queryKey: ["poi", poi], enabled: !!poi, queryFn: () => rpc<{
     claims: { username: string; guild: string | null; verification: string; created_at: string }[];
+    guild_claim: { username: string; verification: string; created_at: string } | null;
     guild_visitors: { username: string; verification: string; created_at: string }[];
   }>("get_poi_detail", { p_poi: poi }) });
 export const quoteShipment = (from: string, to: string, qty: number) => rpc<number>("quote_shipment", { p_from: from, p_to: to, p_qty: qty });

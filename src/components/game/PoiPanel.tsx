@@ -50,6 +50,17 @@ export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; 
             <dt className="text-muted-foreground">Zdroj</dt><dd className="text-right"><a className="underline" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/${{ n: "node", w: "way", r: "relation" }[poi.osm_id[0] as "n"]}/${poi.osm_id.slice(1)}`}>OpenStreetMap</a></dd>
           </dl>
         </Section>
+        {detail.data?.guild_claim && (
+          <Section title="Objev guildy">
+            <dl className="grid grid-cols-2 gap-y-1 text-sm">
+              <dt className="text-muted-foreground">Stav</dt><dd className="text-right font-medium text-res-green">Získáno guildou</dd>
+              <dt className="text-muted-foreground">Objevil</dt><dd className="text-right">{detail.data.guild_claim.username}</dd>
+              <dt className="text-muted-foreground">Datum objevení</dt><dd className="text-right tabular-nums">{new Date(detail.data.guild_claim.created_at).toLocaleDateString("cs-CZ")}</dd>
+              <dt className="text-muted-foreground">Čas objevení</dt><dd className="text-right tabular-nums">{new Date(detail.data.guild_claim.created_at).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}</dd>
+              <dt className="text-muted-foreground">Ověření</dt><dd className="text-right">{detail.data.guild_claim.verification === "gps" ? "GPS" : "Simulované"}</dd>
+            </dl>
+          </Section>
+        )}
         <Section title="Potřebné zásoby">
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-2"><ResDot r={res} /> {cost} {RESOURCE_META[res].genitive} zásob</span>
