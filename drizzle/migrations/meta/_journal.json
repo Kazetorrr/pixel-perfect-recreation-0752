@@ -50,6 +50,13 @@
       "when": 1793302354558,
       "tag": "0006_semi_realistic_travel",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793310302747,
+      "tag": "0007_gps_expedition_loading",
+      "breakpoints": true
     }
   ]
 }
