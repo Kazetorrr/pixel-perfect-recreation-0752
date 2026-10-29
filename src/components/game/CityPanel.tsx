@@ -16,7 +16,7 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
   const isHere = state.profile.current_city_id === city.id;
   const isHome = state.profile.home_city_id === city.id;
   const eff = (r: Resource) => Number(city[`eff_${r}` as const]);
-  const rate = (r: Resource) => { const l = pc?.buildings[r]; return l ? cfg.prod_per_level[l] * eff(r) : 0; };
+  const rate = (r: Resource) => { const l = pc?.buildings[r]; return l ? (cfg.prod_per_level[l] ?? 0) * eff(r) : 0; };
   const stored = pc ? RESOURCES.reduce((s, r) => s + (pc.inventory[r] ?? 0), 0) : 0;
   const cap = pc ? pc.warehouse_level * cfg.warehouse_capacity_per_level : 0;
 
@@ -83,7 +83,7 @@ export function CityPanel({ city, cities, state, guild, onClose }: { city: City;
                       <div className="text-sm font-semibold">{RESOURCE_META[r].label}</div>
                       <div className="text-xs text-muted-foreground">
                         {lvl ? `Úroveň ${lvl} · ${fmt(rate(r))}/den` : "Bez budovy"} · účinnost {Math.round(eff(r) * 100)} %
-                        {!max && lvl ? ` → ${fmt(cfg.prod_per_level[lvl + 1] * eff(r))}/den` : ""}
+                        {!max && lvl ? ` → ${fmt((cfg.prod_per_level[lvl + 1] ?? 0) * eff(r))}/den` : ""}
                       </div>
                     </div>
                     <Button size="sm" variant={lvl ? "secondary" : "default"} disabled={max || build.isPending || state.profile.sp_balance < (cost ?? 0)}
@@ -141,7 +141,7 @@ function EfficiencyBars({ city }: { city: City }) {
   );
 }
 
-function FacilityRow(p: { icon: React.ReactNode; label: string; level: number; max: number; desc: string; cost?: number; sp: number; pending: boolean; onClick: () => void }) {
+function FacilityRow(p: { icon: React.ReactNode; label: string; level: number; max: number; desc: string; cost?: number | undefined; sp: number; pending: boolean; onClick: () => void }) {
   const maxed = p.level >= p.max;
   return (
     <div className="flex items-center gap-3 rounded-xl border bg-card/60 p-3">
@@ -237,7 +237,7 @@ function ShipmentForm({ from, cities, state, guild }: { from: City; cities: City
     return [own, ...(guild?.members.filter((m) => m.id !== me) ?? [])];
   }, [guild, state.cities, me]);
   const [rcpt, setRcpt] = useState(me);
-  const r = recipients.find((x) => x.id === rcpt) ?? recipients[0];
+  const r = recipients.find((x) => x.id === rcpt) ?? recipients[0]!;
   const destOptions = r.cities.filter((c) => !(rcpt === me && c === from.id));
   const [dest, setDest] = useState<string>("");
   const to = destOptions.includes(dest) ? dest : destOptions[0];
@@ -259,7 +259,7 @@ function ShipmentForm({ from, cities, state, guild }: { from: City; cities: City
           <p className="text-xs text-muted-foreground">{rcpt === me ? "Nemáte jiný sklad. Docestujte do dalšího města." : "Příjemce nemá žádný sklad."}</p>
         ) : (
           <>
-            <Select value={to} onValueChange={setDest}>
+            <Select value={to ?? ""} onValueChange={setDest}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{destOptions.map((c) => <SelectItem key={c} value={c}>{from.name} → {destName(c)}</SelectItem>)}</SelectContent>
             </Select>

@@ -19,7 +19,7 @@ export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; 
     (d as { status: string }).status === "visit" ? "Návštěva zaznamenána (guilda již lokalitu vlastní)" : state.profile.guild_id ? "Lokalita získána pro guildu" : "Lokalita získána");
 
   const gpsClaim = () => {
-    if (!("geolocation" in navigator)) return toast.error("Prohlížeč nepodporuje určování polohy");
+    if (!("geolocation" in navigator)) { toast.error("Prohlížeč nepodporuje určování polohy"); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (p) => { setLocating(false); claim.mutate({ p_poi: poi.id, p_mode: "gps", p_lat: p.coords.latitude, p_lng: p.coords.longitude, p_accuracy: p.coords.accuracy }); },

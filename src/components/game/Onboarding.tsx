@@ -23,7 +23,7 @@ export function Onboarding() {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.rpc("complete_onboarding", { p_username: name, p_city: city });
-    if (error) { setBusy(false); return toast.error(error.message); }
+    if (error) { setBusy(false); toast.error(error.message); return; }
     if (guildMode !== "none" && guildVal.trim()) {
       const r = guildMode === "create"
         ? await supabase.rpc("create_guild", { p_name: guildVal })
