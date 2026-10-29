@@ -96,10 +96,10 @@ export function GameMap(props: {
         node.dataset["here"] = String(st?.profile.current_city_id === c.id);
         const isSel = sel?.kind === "city" && sel.id === c.id;
         node.dataset["selected"] = String(isSel);
-        const bars = props.showProd ? active.map((r) => {
+        const bars = active.map((r) => {
           const eff = Number(c[`eff_${r}` as const]);
           return `<div class="tk-bar"><i style="width:${Math.round(eff * 40)}px;background:${RESOURCE_META[r].color}"></i>${Math.round(eff * 100)}%</div>`;
-        }).join("") : "";
+        }).join("");
         const card = isSel || bars ? `<div class="tk-city-card">${isSel ? c.name : ""}${bars}</div>` : "";
         node.innerHTML = `<div class="tk-city-dot">${ICON_CITY}</div>${card}`;
         node.title = c.name;

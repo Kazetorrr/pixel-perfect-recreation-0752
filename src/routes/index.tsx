@@ -30,8 +30,8 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
   const [layer, setLayer] = useState<"economy" | "exploration">("economy");
   const [sel, setSel] = useState<Selection>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [showProd, setShowProd] = useState(false);
-  const [resFilter, setResFilter] = useState<Record<Resource, boolean>>({ blue: true, green: true, yellow: true, red: true });
+  const [listOpen, setListOpen] = useState(false);
+  const [resFilter, setResFilter] = useState<Record<Resource, boolean>>({ blue: false, green: false, yellow: false, red: false });
   const [catFilter, setCatFilter] = useState<Record<Category, boolean>>({ peak: true, ruin: true, tower: true, monument: true });
   const fund = useAction<{ p_amount: number | null }>("fund_travel", (d) => ((d as { completed: boolean }).completed ? "Dorazili jste do cíle" : "SP přidány k cestě"));
 
@@ -44,7 +44,7 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
 
   return (
     <>
-      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} showProd={showProd} selection={sel}
+      <GameMap layer={layer} cities={memoCities} pois={memoPois} state={state} resFilter={resFilter} catFilter={catFilter} selection={sel}
         onSelect={setSel} />
 
       {/* Left panel */}
@@ -62,8 +62,12 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
           ))}
         </div>
         <div className={cn("panel p-3", !filtersOpen && "hidden sm:block")}>
-          <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">{layer === "economy" ? "Typy produkce" : "Kategorie lokalit"}<ChevronDown className="size-3" /></div>
-          {layer === "economy"
+          <button type="button" onClick={() => setListOpen(!listOpen)} aria-expanded={listOpen}
+            className={cn("flex w-full items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground", listOpen && "mb-2")}>
+            {layer === "economy" ? "Typy produkce" : "Kategorie lokalit"}
+            <ChevronDown className={cn("size-3 transition-transform", listOpen && "rotate-180")} />
+          </button>
+          {!listOpen ? null : layer === "economy"
             ? RESOURCES.map((r) => (
               <label key={r} className="flex cursor-pointer items-center gap-3 py-1.5 text-sm">
                 <span className="size-3 rounded-full" style={{ background: RESOURCE_META[r].color }} />
@@ -71,9 +75,10 @@ function MapScreen({ state, guild }: { state: GameState; guild: Guild | null | u
                 <Checkbox checked={resFilter[r]} onCheckedChange={(v) => setResFilter({ ...resFilter, [r]: !!v })} />
               </label>
             )).concat(
-              <label key="showProd" className="mt-2 flex cursor-pointer items-center gap-3 border-t border-border pt-2.5 text-sm">
-                <span className="flex-1">Zobrazit produkci</span>
-                <Checkbox checked={showProd} onCheckedChange={(v) => setShowProd(!!v)} />
+              <label key="all" className="mt-2 flex cursor-pointer items-center gap-3 border-t border-border pt-2.5 text-sm">
+                <span className="flex-1">Ukázat vše</span>
+                <Checkbox checked={RESOURCES.every((r) => resFilter[r])}
+                  onCheckedChange={(v) => setResFilter({ blue: !!v, green: !!v, yellow: !!v, red: !!v })} />
               </label>,
             )
             : CATEGORIES.map((c) => (
