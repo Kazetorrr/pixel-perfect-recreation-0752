@@ -62,6 +62,7 @@ export function GameMap(props: {
   const lib = useRef<typeof import("maplibre-gl") | null>(null);
   const [ready, setReady] = useState(false);
   const [styleNote, setStyleNote] = useState<string | null>(null);
+  const [view, setView] = useState({ zoom: 10, key: 0 });
   const onSelectRef = useRef(props.onSelect);
   onSelectRef.current = props.onSelect;
 
@@ -86,6 +87,7 @@ export function GameMap(props: {
       m.on("error", (e) => { if (!m.isStyleLoaded() && String(e.error?.message ?? "").match(/style|fetch|Failed/i)) fallback(); });
       const zc = () => el.current?.classList.toggle("tk-compact", m.getZoom() < 9.3);
       m.on("zoom", zc); zc();
+      m.on("moveend", () => setView((v) => ({ zoom: m.getZoom(), key: v.key + 1 })));
       m.on("load", () => { clearTimeout(timer); setReady(true); });
       m.on("style.load", () => setReady(true));
       m.addControl(new ml.NavigationControl({ showCompass: false }), "bottom-right");
@@ -111,7 +113,19 @@ export function GameMap(props: {
 
     if (props.layer === "economy") {
       const active = RESOURCES.filter((r) => props.resFilter[r]);
+      // ~10k settlements: draw only those in view, revealing smaller tiers as you zoom in.
+      const z = view.zoom, b = m.getBounds().toArray();
+      const padX = (b[1][0] - b[0][0]) * 0.15, padY = (b[1][1] - b[0][1]) * 0.15;
+      const keep = new Set<string>([...(owned as Set<string>)]);
+      props.settlements?.forEach((s) => keep.add(s.city_id));
+      if (st?.profile.current_city_id) keep.add(st.profile.current_city_id);
+      if (sel?.kind === "city") keep.add(sel.id);
+      const minZoom = { regional: 0, town: 8.8, village: 11 } as const;
       for (const c of props.cities) {
+        if (!keep.has(c.id)) {
+          if (z < minZoom[c.tier ?? "town"]) continue;
+          if (c.lng < b[0][0] - padX || c.lng > b[1][0] + padX || c.lat < b[0][1] - padY || c.lat > b[1][1] + padY) continue;
+        }
         const node = document.createElement("div");
         node.className = "tk-city";
         node.dataset["owned"] = String(owned.has(c.id));
@@ -152,7 +166,7 @@ export function GameMap(props: {
         markers.current.push(new ml.Marker({ element: node }).setLngLat([p.lng, p.lat]).addTo(m));
       }
     }
-  }, [ready, props.layer, props.cities, props.pois, props.state, props.settlements, props.resFilter, props.catFilter, props.selection]);
+  }, [ready, props.layer, props.cities, props.pois, props.state, props.settlements, props.resFilter, props.catFilter, props.selection, view]);
 
   // Glowing trail after travel: detect arrival via current_city_id change
   const prevCity = useRef<string | null | undefined>(undefined);

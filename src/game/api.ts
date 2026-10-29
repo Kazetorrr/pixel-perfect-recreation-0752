@@ -65,8 +65,15 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 
 export const useCities = () =>
   useQuery({ queryKey: ["cities"], staleTime: Infinity, queryFn: async () => {
-    const { data, error } = await supabase.from("cities").select("*").order("name");
-    if (error) throw error; return data as unknown as City[];
+    // Server caps responses at 1000 rows — page through all settlements in parallel.
+    const { count, error: ce } = await supabase.from("cities").select("id", { count: "exact", head: true });
+    if (ce) throw ce;
+    const PAGE = 1000, pages = Math.ceil((count ?? 0) / PAGE);
+    const parts = await Promise.all(Array.from({ length: pages }, (_, i) =>
+      supabase.from("cities").select("*").order("id").range(i * PAGE, i * PAGE + PAGE - 1)));
+    const all: City[] = [];
+    for (const p of parts) { if (p.error) throw p.error; all.push(...(p.data as unknown as City[])); }
+    return all.sort((a, b) => a.name.localeCompare(b.name, "cs"));
   } });
 export const usePois = () =>
   useQuery({ queryKey: ["pois"], staleTime: Infinity, queryFn: async () => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,14 @@ export function Onboarding() {
   const gs = useGameState(true);
   const palette = ((gs.data as { config?: { player_colors?: string[] } } | undefined)?.config?.player_colors ?? [DEFAULT_PLAYER_COLOR]) as string[];
   const sel = cities.data?.find((c) => c.id === city);
+  const [q, setQ] = useState("");
+  const shown = useMemo(() => {
+    const all = cities.data ?? [];
+    const n = q.trim().toLocaleLowerCase("cs");
+    const rank = { regional: 0, town: 1, village: 2 } as const;
+    const list = n ? all.filter((c) => c.name.toLocaleLowerCase("cs").includes(n)) : all.filter((c) => c.tier !== "village");
+    return [...list].sort((a, b) => rank[a.tier] - rank[b.tier] || a.name.localeCompare(b.name, "cs")).slice(0, 150);
+  }, [cities.data, q]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,9 +54,10 @@ export function Onboarding() {
         <div className="space-y-1"><Label htmlFor="un">Uživatelské jméno</Label><Input id="un" required minLength={3} maxLength={20} value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div className="space-y-1">
           <Label>Domovské město</Label>
+          <Input placeholder="Hledat obec…" value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={city} onValueChange={setCity}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{cities.data?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name} · {TIER_META[c.tier]?.label}</SelectItem>)}</SelectContent>
+            <SelectContent>{[...(sel && !shown.includes(sel) ? [sel] : []), ...shown].map((c) => <SelectItem key={c.id} value={c.id}>{c.name} · {TIER_META[c.tier]?.label}</SelectItem>)}</SelectContent>
           </Select>
           {sel && (
             <div className="flex gap-3 pt-1 text-xs text-muted-foreground">
