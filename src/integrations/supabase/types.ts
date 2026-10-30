@@ -812,6 +812,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      _game_config_base: { Args: never; Returns: Json }
       _haversine_km: {
         Args: { a_lat: number; a_lng: number; b_lat: number; b_lng: number }
         Returns: number
