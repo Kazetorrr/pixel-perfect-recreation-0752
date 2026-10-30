@@ -41,6 +41,8 @@ export function Onboarding() {
 
   const locate = async () => {
     setLocating(true);
+    try { await ensureLocationPermission(); }
+    catch (e) { toast.error((e as Error).message); setLocating(false); return; }
     try {
       // Watch up to 20 s and keep the most accurate fix (first fixes are often network-based ±2 km).
       const p = await new Promise<GeolocationPosition>((resolve, reject) => {

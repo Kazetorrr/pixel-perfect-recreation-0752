@@ -22,9 +22,11 @@ export function ExpeditionSupply({ city, pc, state }: { city: City; pc: PlayerCi
   const total = RESOURCES.reduce((n,r)=>n+(amounts[r] ?? 0),0);
   const validation = expeditionLoadError(pc.inventory,state.expedition,amounts,state.config.expedition_capacity);
   const presence = fix ? expeditionPresence(state.config,city,fix) : null;
-  const locate = (load = false) => {
+  const locate = async (load = false) => {
     if (!navigator.geolocation) { setGpsError('Prohlížeč nepodporuje určování polohy.'); return; }
     setTestGps(false); setLocating(true); setGpsError(null); setFix(null);
+    try { await ensureLocationPermission(); }
+    catch (e) { setLocating(false); setGpsError((e as Error).message); return; }
     navigator.geolocation.getCurrentPosition(position=>{
       setLocating(false);
       const fresh = {lat:position.coords.latitude,lng:position.coords.longitude,accuracy:position.coords.accuracy};
