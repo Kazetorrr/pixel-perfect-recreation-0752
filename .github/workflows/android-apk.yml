@@ -13,6 +13,12 @@ jobs:
         with: { distribution: temurin, java-version: "21" }
       - run: bun install
       - run: bunx cap add android && bunx cap sync android
+      - name: Raise minSdkVersion for Health Connect
+        run: |
+          sed -i -E 's/^[[:space:]]*minSdkVersion[[:space:]]*=.*/    minSdkVersion = 26/' android/variables.gradle
+          grep -q 'minSdkVersion = 26' android/variables.gradle
+          cat android/variables.gradle
+
       - name: Health Connect permissions
         run: |
           M=android/app/src/main/AndroidManifest.xml
