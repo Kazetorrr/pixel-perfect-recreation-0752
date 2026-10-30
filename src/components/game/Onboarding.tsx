@@ -9,15 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { RESOURCES, RESOURCE_META } from "@/game/config";
 import { useCities, useGameState } from "@/game/api";
 import { DEFAULT_PLAYER_COLOR, TIER_META } from "@/game/config";
-import { FlaskConical } from "lucide-react";
+import { ArrowLeft, FlaskConical } from "lucide-react";
 
 export function Onboarding() {
   const cities = useCities();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [city, setCity] = useState("zlin");
-  const [guildMode, setGuildMode] = useState<"none" | "create" | "join">("none");
-  const [guildVal, setGuildVal] = useState("");
   const [busy, setBusy] = useState(false);
   const [color, setColor] = useState(DEFAULT_PLAYER_COLOR);
   const gs = useGameState(true);
@@ -53,12 +51,6 @@ export function Onboarding() {
         : { error: { message: "Poloha není dostupná." } };
     const { error } = result;
     if (error) { setBusy(false); toast.error(error.message); return; }
-    if (guildMode !== "none" && guildVal.trim()) {
-      const r = guildMode === "create"
-        ? await supabase.rpc("create_guild", { p_name: guildVal })
-        : await supabase.rpc("join_guild", { p_code: guildVal });
-      if (r.error) toast.error(`Guilda: ${r.error.message}`); else toast.success(guildMode === "create" ? "Guilda založena" : "Připojili jste se ke guildě");
-    }
     toast.success("Vítejte v summ-it!");
     await qc.invalidateQueries();
     setBusy(false);
@@ -93,20 +85,10 @@ export function Onboarding() {
           </div>
           <p className="text-xs text-muted-foreground">Barvou se na mapě označují vaše sídla. V guildě musí mít každý člen jinou barvu.</p>
         </div>
-        <div className="space-y-2">
-          <Label>Guilda (volitelné)</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {(["none", "create", "join"] as const).map((m) => (
-              <Button key={m} type="button" size="sm" variant={guildMode === m ? "default" : "secondary"} onClick={() => setGuildMode(m)}>
-                {m === "none" ? "Později" : m === "create" ? "Založit" : "Připojit"}
-              </Button>
-            ))}
-          </div>
-          {guildMode !== "none" && <Input placeholder={guildMode === "create" ? "Název guildy" : "Kód pozvánky"} value={guildVal} onChange={(e) => setGuildVal(e.target.value)} />}
-        </div>
         <p className="text-xs text-muted-foreground">Domov je trvalý a ověřuje se polohou. Začínáte bez budov se 70 zásobami ve skladu o kapacitě 110.</p>
         <Button type="submit" className="w-full" disabled={busy}>{busy ? "Ověřuji polohu…" : "Ověřit domov a začít"}</Button>
         {testingEnabled && <Button type="submit" data-test-onboarding="true" variant="secondary" className="w-full" disabled={busy}><FlaskConical/>Založit testovací profil bez GPS</Button>}
+        <Button type="button" variant="ghost" className="w-full" onClick={() => supabase.auth.signOut()}><ArrowLeft/>Zpět na přihlášení</Button>
       </form>
     </div>
   );
