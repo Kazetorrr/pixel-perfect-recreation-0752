@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Map as MapIcon, Users } from "lucide-react";
 import { useGameState, useGuild, useSession, type GameState, type Guild } from "@/game/api";
 import { AuthScreen } from "./AuthScreen";
-import logoFull from "@/assets/summit-logo-full.png";
+import logoIcon from "@/assets/summit-logo-icon.png";
 import { Onboarding } from "./Onboarding";
 import { TopBar } from "./TopBar";
 import { useEffect } from "react";
@@ -29,7 +29,7 @@ export function GameShell({ children }: { children: (state: GameState, guild: Gu
     return (
       <div className="grid min-h-screen place-items-center">
         <div className="flex flex-col items-center gap-4">
-          <img src={logoFull} alt="summ-it" width={320} height={79} className="h-auto w-72 animate-pulse" />
+          <img src={logoIcon} alt="summ-it" width={174} height={174} className="h-28 w-28 animate-pulse" />
           <div className="text-muted-foreground">Načítám…</div>
         </div>
       </div>
