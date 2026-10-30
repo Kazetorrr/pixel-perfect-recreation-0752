@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Footprints, LogOut, Shield, Wrench } from "lucide-react";
+import { Footprints, HelpCircle, LogOut, Shield, Wrench } from "lucide-react";
+import { Tutorial } from "./Tutorial";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -32,6 +33,7 @@ export function TopBar({ state, guild }: { state: GameState; guild: Guild | null
         </div>
       </div>
       {state.config.dev_mode && <DevPanel state={state} />}
+      <HelpButton user={p.username} />
       <Popover>
         <PopoverTrigger asChild>
           <button className="panel pointer-events-auto grid size-11 place-items-center font-semibold uppercase">{p.username[0]}</button>
@@ -43,6 +45,16 @@ export function TopBar({ state, guild }: { state: GameState; guild: Guild | null
         </PopoverContent>
       </Popover>
     </div>
+  );
+}
+
+function HelpButton({ user }: { user: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="panel pointer-events-auto grid size-11 place-items-center" aria-label="Jak hrát"><HelpCircle className="size-5" /></button>
+      <Tutorial user={user} open={open} onOpenChange={setOpen} />
+    </>
   );
 }
 
