@@ -19,6 +19,7 @@ export function TopBar({ state, guild }: { state: GameState; guild: Guild | null
         <img src={logoTopIcon} alt="summ-it" className="size-7 shrink-0 sm:hidden" />
         <img src={logoTop} alt="summ-it" className="hidden h-8 w-auto shrink-0 sm:block" />
         <div className="mx-1 hidden h-8 w-px bg-border sm:block" />
+        <TodaySteps />
         <StepPopover state={state} />
       </div>
       <div className="flex-1" />
