@@ -70,21 +70,29 @@ describe('Temporary test onboarding', () => {
 
 describe('Home founding with a coarse indoor GPS fix', () => {
   it('accepts a ±2000 m fix and offers the found settlement without a weak-signal warning', async () => {
+    mocks.cities = [{ id: 'otrokovice', name: 'Otrokovice', tier: 'town', lat: 49.22, lng: 17.62 }];
+    mocks.watch.mockImplementation((success: (p: unknown) => void) => {
+      setTimeout(() => success({ coords: { latitude: 49.22, longitude: 17.62, accuracy: 2000 } }), 0);
+      return 7;
+    });
     vi.useFakeTimers();
+    let view;
     try {
-      mocks.cities = [{ id: 'otrokovice', name: 'Otrokovice', tier: 'town', lat: 49.22, lng: 17.62 }];
-      mocks.watch.mockImplementation((success: (p: unknown) => void) => {
-        setTimeout(() => success({ coords: { latitude: 49.22, longitude: 17.62, accuracy: 2000 } }), 0);
-        return 7;
-      });
-      const view = render(<Onboarding />);
+      view = render(<Onboarding />);
       fireEvent.change(view.getByLabelText('Uživatelské jméno'), { target: { value: 'Kundus' } });
       fireEvent.click(view.getByRole('button', { name: 'Zaměřit moji polohu' }));
       await vi.advanceTimersByTimeAsync(20000);
     } finally {
       vi.useRealTimers();
     }
-    const view = render(<Onboarding />);
+    await waitFor(() => expect(view.getByText('Otrokovice')).toBeTruthy());
     expect(view.queryByText(/Signál je slabý/)).toBeNull();
+    const form = view.container.querySelector('form');
+    const button = view.getByRole('button', { name: /Potvrdit Otrokovice a začít/ });
+    if (!form || !button) throw new Error('Missing confirm action after a coarse fix');
+    expect(button).not.toBeDisabled();
+    submitWith(button, form);
+    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('complete_onboarding_verified', expect.objectContaining({ p_username: 'Kundus', p_city: 'otrokovice', p_accuracy: 2000 })));
   });
 });
+
