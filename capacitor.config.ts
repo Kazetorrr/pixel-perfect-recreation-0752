@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appId: "app.summit.game",
   appName: "summ-it",
   webDir: "public",
-  server: { url: "https://pixel-perfect-recreation-0752.lovable.app", cleartext: false },
+  server: { url: "https://summ-it.lovable.app", cleartext: false },
 };
 
 export default config;
