@@ -69,3 +69,6 @@ export const TIER_ICON: Record<Tier, string> = {
   town: `<path d="M3 20v-8l4-3 4 3v8M11 20V9l2-5 2 5v11M15 20v-7l3-2 3 2v7M2 20h20"/><path d="M13 6v.01"/>`,
   regional: `<path d="M3 20V8h3v2h2V8h3v2h2V8h3v2h2V8h3v12z"/><path d="M10 20v-5a2 2 0 0 1 4 0v5M12 8V3l3 1-3 1"/>`,
 };
+
+/** Download link for the Android test APK (GitHub release). Empty = button hidden. */
+export const APK_URL = "";

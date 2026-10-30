@@ -5,12 +5,25 @@ import { AuthScreen } from "./AuthScreen";
 import logoFull from "@/assets/summit-logo-full.png";
 import { Onboarding } from "./Onboarding";
 import { TopBar } from "./TopBar";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { syncHealthSteps } from "@/lib/health-connect";
 
 export function GameShell({ children }: { children: (state: GameState, guild: Guild | null | undefined) => React.ReactNode }) {
   const { session, ready } = useSession();
   const st = useGameState(!!session);
   const onboarded = !!st.data && (st.data as GameState).onboarded;
   const guild = useGuild(!!session && onboarded);
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!onboarded) return;
+    const run = () => syncHealthSteps().then((n) => { if (n > 0) { toast.success(`Health Connect: +${n} kroků`); qc.invalidateQueries({ queryKey: ["state"] }); } }).catch((e: Error) => toast.error(`Health Connect: ${e.message}`));
+    run();
+    const onVis = () => { if (document.visibilityState === "visible") run(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [onboarded, qc]);
 
   if (!ready || (session && st.isLoading))
     return (
