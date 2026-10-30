@@ -4,52 +4,63 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { RESOURCES, RESOURCE_META } from "@/game/config";
-import { useCities, useGameState } from "@/game/api";
-import { DEFAULT_PLAYER_COLOR, TIER_META } from "@/game/config";
-import { ArrowLeft, FlaskConical } from "lucide-react";
+import { useCities, useGameState, type City } from "@/game/api";
+import { DEFAULT_PLAYER_COLOR, TIER_META, haversineKm, type Tier } from "@/game/config";
+import { ArrowLeft, FlaskConical, LocateFixed, MapPin, RefreshCw } from "lucide-react";
+
+type Fix = { lat: number; lng: number; accuracy: number };
+const DEFAULT_RADIUS: Record<Tier, number> = { village: 3, town: 5, regional: 10 };
 
 export function Onboarding() {
   const cities = useCities();
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [city, setCity] = useState("zlin");
   const [busy, setBusy] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [color, setColor] = useState(DEFAULT_PLAYER_COLOR);
+  const [fix, setFix] = useState<Fix | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [showOthers, setShowOthers] = useState(false);
   const gs = useGameState(true);
-  const palette = ((gs.data as { config?: { player_colors?: string[] } } | undefined)?.config?.player_colors ?? [DEFAULT_PLAYER_COLOR]) as string[];
-  const testingEnabled = (gs.data as { config?: { dev_mode?: boolean } } | undefined)?.config?.dev_mode === true;
-  const sel = cities.data?.find((c) => c.id === city);
-  const [q, setQ] = useState("");
-  const shown = useMemo(() => {
-    const all = cities.data ?? [];
-    const n = q.trim().toLocaleLowerCase("cs");
-    const rank = { regional: 0, town: 1, village: 2 } as const;
-    const list = n ? all.filter((c) => c.name.toLocaleLowerCase("cs").includes(n)) : all.filter((c) => c.tier !== "village");
-    return [...list].sort((a, b) => rank[a.tier] - rank[b.tier] || a.name.localeCompare(b.name, "cs")).slice(0, 150);
-  }, [cities.data, q]);
+  const cfg = (gs.data as { config?: { player_colors?: string[]; dev_mode?: boolean; home_radius_km?: Record<Tier, number> } } | undefined)?.config;
+  const palette = cfg?.player_colors ?? [DEFAULT_PLAYER_COLOR];
+  const testingEnabled = cfg?.dev_mode === true;
+  const radius = cfg?.home_radius_km ?? DEFAULT_RADIUS;
+
+  const nearby = useMemo(() => {
+    if (!fix) return [] as (City & { km: number })[];
+    return (cities.data ?? [])
+      .map((c) => ({ ...c, km: haversineKm(fix, c) }))
+      .filter((c) => c.km <= (radius[c.tier] ?? 3))
+      .sort((a, b) => a.km - b.km)
+      .slice(0, 20);
+  }, [fix, cities.data, radius]);
+  const sel = nearby.find((c) => c.id === city) ?? null;
+
+  const locate = async () => {
+    setLocating(true);
+    try {
+      const p = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
+      const f = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
+      setFix(f); setShowOthers(false);
+      const best = (cities.data ?? []).map((c) => ({ c, km: haversineKm(f, c) })).filter((x) => x.km <= (radius[x.c.tier] ?? 3)).sort((a, b) => a.km - b.km)[0];
+      setCity(best?.c.id ?? null);
+      if (!best) toast.error("Ve vašem okolí jsme nenašli žádné sídlo.");
+    } catch {
+      toast.error("Polohu se nepodařilo získat. Povolte přístup k přesné poloze.");
+    } finally { setLocating(false); }
+  };
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const testOnly = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-test-onboarding') === 'true';
     if (testOnly && !testingEnabled) return;
+    if (!testOnly && (!fix || !city)) return;
     setBusy(true);
-    let position: GeolocationPosition | undefined;
-    if (!testOnly) {
-    try {
-      position = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
-    } catch {
-      setBusy(false); toast.error("Pro ověření domovského sídla povolte přístup k poloze."); return;
-    }
-    }
-    const result = testOnly
-      ? await supabase.rpc("complete_onboarding_test", { p_username: name, p_city: city, p_color: color })
-      : position
-        ? await supabase.rpc("complete_onboarding_verified", { p_username: name, p_city: city, p_color: color, p_lat: position.coords.latitude, p_lng: position.coords.longitude, p_accuracy: position.coords.accuracy })
-        : { error: { message: "Poloha není dostupná." } };
-    const { error } = result;
+    const { error } = testOnly
+      ? await supabase.rpc("complete_onboarding_test", { p_username: name, p_city: city ?? "zlin", p_color: color })
+      : await supabase.rpc("complete_onboarding_verified", { p_username: name, p_city: city!, p_color: color, p_lat: fix!.lat, p_lng: fix!.lng, p_accuracy: fix!.accuracy });
     if (error) { setBusy(false); toast.error(error.message); return; }
     toast.success("Vítejte v summ-it!");
     await qc.invalidateQueries();
@@ -59,21 +70,8 @@ export function Onboarding() {
   return (
     <div className="grid min-h-screen place-items-center p-4">
       <form onSubmit={submit} className="panel w-full max-w-md space-y-4 p-6">
-        <div><h1 className="text-2xl font-semibold">Vítej, Cestovateli !</h1><p className="text-sm text-muted-foreground">Zvolte jméno a domovské město.</p></div>
+        <div><h1 className="text-2xl font-semibold">Vítej, Cestovateli !</h1><p className="text-sm text-muted-foreground">Zvolte jméno a barvu. Domov založíme podle vaší polohy.</p></div>
         <div className="space-y-1"><Label htmlFor="un">Uživatelské jméno</Label><Input id="un" required minLength={3} maxLength={20} value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="space-y-1">
-          <Label>Domovské město</Label>
-          <Input placeholder="Hledat obec…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Select value={city} onValueChange={setCity}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{[...(sel && !shown.includes(sel) ? [sel] : []), ...shown].map((c) => <SelectItem key={c.id} value={c.id}>{c.name} · {TIER_META[c.tier]?.label}</SelectItem>)}</SelectContent>
-          </Select>
-          {sel && (
-            <div className="flex gap-3 pt-1 text-xs text-muted-foreground">
-              {RESOURCES.map((r) => <span key={r} className="flex items-center gap-1"><span className="size-2 rounded-full" style={{ background: RESOURCE_META[r].color }} />{Math.round(Number(sel[`eff_${r}` as const]) * 100)} %</span>)}
-            </div>
-          )}
-        </div>
         <div className="space-y-2">
           <Label>Barva hráče</Label>
           <div className="grid grid-cols-8 gap-2">
@@ -83,10 +81,39 @@ export function Onboarding() {
                 style={{ background: c, borderColor: color === c ? "var(--foreground)" : "transparent", transform: color === c ? "scale(1.15)" : undefined, boxShadow: color === c ? `0 0 10px ${c}` : undefined }} />
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">Barvou se na mapě označují vaše sídla. V guildě musí mít každý člen jinou barvu.</p>
         </div>
-        <p className="text-xs text-muted-foreground">Domov je trvalý a ověřuje se polohou. Začínáte bez budov se 70 zásobami ve skladu o kapacitě 110.</p>
-        <Button type="submit" className="w-full" disabled={busy}>{busy ? "Ověřuji polohu…" : "Ověřit domov a začít"}</Button>
+
+        <div className="space-y-2 rounded-xl border bg-card/60 p-3">
+          <div className="flex items-center gap-2 text-sm font-semibold"><MapPin className="size-4" />Domovské sídlo podle vaší polohy</div>
+          {!fix ? (
+            <Button type="button" variant="outline" className="w-full" onClick={locate} disabled={locating}><LocateFixed />{locating ? "Zaměřuji…" : "Zaměřit moji polohu"}</Button>
+          ) : (
+            <>
+              {sel ? (
+                <div><div className="text-lg font-semibold">{sel.name}</div><div className="text-xs text-muted-foreground">{TIER_META[sel.tier].label} · {sel.km.toFixed(1)} km od vás</div></div>
+              ) : <p className="text-sm text-destructive">V okolí jsme nenašli žádné sídlo.</p>}
+              {nearby.length > 1 && (
+                <button type="button" className="text-xs text-primary underline" onClick={() => setShowOthers((v) => !v)}>Netrefili jsme se? Zde jsou ostatní města a vesnice ve tvém okolí.</button>
+              )}
+              {showOthers && (
+                <div className="max-h-48 space-y-1 overflow-y-auto">
+                  {nearby.map((c) => (
+                    <button key={c.id} type="button" onClick={() => setCity(c.id)}
+                      className={`flex w-full justify-between rounded-md border px-2 py-1.5 text-left text-sm ${c.id === city ? "border-primary bg-primary/10" : ""}`}>
+                      <span>{c.name} <span className="text-xs text-muted-foreground">· {TIER_META[c.tier].label}</span></span>
+                      <span className="text-xs text-muted-foreground">{c.km.toFixed(1)} km</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="ghost" size="sm" onClick={locate} disabled={locating}><RefreshCw />{locating ? "Zaměřuji…" : "Zaměřit znovu"}</Button>
+            </>
+          )}
+          <p className="text-xs text-muted-foreground">Ověření GPS polohy je jednorázová validace a je nutné pro správné a férové fungování hry. Domov je trvalý a nelze ho později změnit. V dotazu prohlížeče na polohu prosím povolte <b>přesnou</b> polohu, ne jen přibližnou.</p>
+        </div>
+
+        <p className="text-xs text-muted-foreground">Začínáte bez budov se 70 zásobami ve skladu o kapacitě 110.</p>
+        <Button type="submit" className="w-full" disabled={busy || !fix || !city}>{busy ? "Zakládám…" : sel ? `Potvrdit ${sel.name} a začít` : "Potvrdit domov a začít"}</Button>
         {testingEnabled && <Button type="submit" data-test-onboarding="true" variant="secondary" className="w-full" disabled={busy}><FlaskConical/>Založit testovací profil bez GPS</Button>}
         <Button type="button" variant="ghost" className="w-full" onClick={() => supabase.auth.signOut()}><ArrowLeft/>Zpět na přihlášení</Button>
       </form>
