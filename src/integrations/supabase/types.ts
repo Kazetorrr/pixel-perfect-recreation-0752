@@ -812,6 +812,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      _game_config_base: { Args: never; Returns: Json }
       _haversine_km: {
         Args: { a_lat: number; a_lng: number; b_lat: number; b_lng: number }
         Returns: number
@@ -958,6 +959,7 @@ export type Database = {
       }
       get_poi_detail: { Args: { p_poi: string }; Returns: Json }
       get_state: { Args: never; Returns: Json }
+      get_today_steps: { Args: never; Returns: number }
       join_guild: { Args: { p_code: string }; Returns: Json }
       leave_guild: { Args: never; Returns: undefined }
       prepare_expedition: {

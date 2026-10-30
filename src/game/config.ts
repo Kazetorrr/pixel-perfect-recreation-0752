@@ -26,7 +26,11 @@ export const MAP_STYLE_URL =
   (import.meta.env["VITE_MAP_STYLE_URL"] as string | undefined) || "https://tiles.openfreemap.org/styles/dark";
 export const MAP_CENTER: [number, number] = [17.62, 49.22];
 
-export const fmt = (n: number | null | undefined) => new Intl.NumberFormat("cs-CZ").format(Math.round(n ?? 0));
+/** Whole numbers with a dot as thousands separator, e.g. 4.000 or 12.500. */
+export const fmt = (n: number | null | undefined) => {
+  const v = Math.round(n ?? 0);
+  return (v < 0 ? "-" : "") + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
 
 export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371, r = (d: number) => (d * Math.PI) / 180;

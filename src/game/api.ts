@@ -89,6 +89,9 @@ export const usePois = () =>
   }) });
 export const useGameState = (enabled: boolean) =>
   useQuery({ queryKey: ["state"], enabled, refetchInterval: 20_000, refetchOnWindowFocus: true, queryFn: () => rpc<GameState | { onboarded: false }>("get_state") });
+/** Verified steps walked today (Prague calendar day); resets at midnight. Display only. */
+export const useTodaySteps = () =>
+  useQuery({ queryKey: ["state", "today"], refetchInterval: 60_000, refetchOnWindowFocus: true, queryFn: async () => Number(await rpc<number>("get_today_steps")) || 0 });
 export type SettlementOwner = { id: string; username: string; color: string; market_level: number; warehouse_level: number; buildings: Partial<Record<Resource, number>> };
 export type Settlement = { city_id: string; owners: SettlementOwner[] };
 /** Settlements with real infrastructure of me + my guild mates. Current player always first. */

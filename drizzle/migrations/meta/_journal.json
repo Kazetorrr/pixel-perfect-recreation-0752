@@ -92,6 +92,13 @@
       "when": 1793357352564,
       "tag": "0012_home_gps_accuracy",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793361155451,
+      "tag": "0013_get_today_steps",
+      "breakpoints": true
     }
   ]
 }
