@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ requestPermission: vi.fn() }));
-vi.mock('@capacitor/geolocation', () => ({ Geolocation: { requestPermission: mocks.requestPermission } }));
+vi.mock('@capacitor/geolocation', () => ({ Geolocation: { requestPermissions: mocks.requestPermission } }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const setNative = (native: boolean) => { (window as any).Capacitor = native ? { isNativePlatform: () => true } : undefined; };

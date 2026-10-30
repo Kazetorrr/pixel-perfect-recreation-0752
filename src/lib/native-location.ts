@@ -11,7 +11,7 @@ import { isNativeApp } from "@/lib/health-connect";
 export async function ensureLocationPermission(): Promise<void> {
   if (!isNativeApp()) return;
   const { Geolocation } = await import("@capacitor/geolocation");
-  const status = await Geolocation.requestPermission();
+  const status = await Geolocation.requestPermissions();
   if (status.location !== "granted") {
     throw new Error("Přístup k poloze byl zamítnut. Povolte polohu v nastavení aplikace.");
   }
