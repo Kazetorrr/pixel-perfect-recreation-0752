@@ -12,7 +12,10 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21" }
       - run: bun install
-      - run: bunx cap add android && bunx cap sync android
+      - run: bunx cap add android
+      - name: App icon (summ-it)
+        run: bunx @capacitor/assets@3 generate --android --iconBackgroundColor '#0b1020' --iconBackgroundColorDark '#0b1020'
+      - run: bunx cap sync android
       - name: Raise minSdkVersion for Health Connect
         run: |
           sed -i -E 's/^[[:space:]]*minSdkVersion[[:space:]]*=.*/    minSdkVersion = 26/' android/variables.gradle
