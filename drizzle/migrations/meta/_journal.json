@@ -99,6 +99,13 @@
       "when": 1793361155451,
       "tag": "0013_get_today_steps",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793362264151,
+      "tag": "0014_sync_steps_skip_pre_registration",
+      "breakpoints": true
     }
   ]
 }
