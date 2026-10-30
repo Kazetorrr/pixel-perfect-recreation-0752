@@ -17,7 +17,7 @@ export function Tutorial({ user, open, onOpenChange }: { user: string; open: boo
   const [i, setI] = useState(0);
   useEffect(() => { if (!localStorage.getItem(key(user))) onOpenChange(true); }, [user, onOpenChange]);
   const close = (o: boolean) => { onOpenChange(o); if (!o) { localStorage.setItem(key(user), "1"); setI(0); } };
-  const s = STEPS[i];
+  const s = STEPS[i] ?? STEPS[0]!;
   const last = i === STEPS.length - 1;
   return (
     <Dialog open={open} onOpenChange={close}>
