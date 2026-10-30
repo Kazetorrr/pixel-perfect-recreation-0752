@@ -42,7 +42,16 @@ export function Onboarding() {
   const locate = async () => {
     setLocating(true);
     try {
-      const p = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }));
+      // Watch up to 20 s and keep the most accurate fix (first fixes are often network-based ±2 km).
+      const p = await new Promise<GeolocationPosition>((resolve, reject) => {
+        let best: GeolocationPosition | null = null;
+        const done = () => { navigator.geolocation.clearWatch(id); clearTimeout(t); best ? resolve(best) : reject(new Error("no fix")); };
+        const id = navigator.geolocation.watchPosition((pos) => {
+          if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+          if (pos.coords.accuracy <= 50) done();
+        }, (e) => { if (!best) { navigator.geolocation.clearWatch(id); clearTimeout(t); reject(e); } }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+        const t = setTimeout(done, 20000);
+      });
       const f = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
       setFix(f); setShowOthers(false);
       const best = (cities.data ?? []).map((c) => ({ c, km: haversineKm(f, c) })).filter((x) => x.km <= (radius[x.c.tier] ?? 3)).sort((a, b) => a.km - b.km)[0];
