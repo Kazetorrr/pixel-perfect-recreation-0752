@@ -19,7 +19,7 @@ jobs:
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.health.READ_STEPS" />\n    <queries><package android:name="com.google.android.apps.healthdata" /></queries>\n    <application#' $M
           sed -i 's#</activity>#  <intent-filter><action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" /></intent-filter>\n        </activity>#' $M
-      - run: cd android && ./gradlew assembleDebug
+      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
