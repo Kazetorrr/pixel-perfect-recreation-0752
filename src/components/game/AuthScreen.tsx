@@ -47,7 +47,7 @@ export function AuthScreen() {
           <div className="space-y-1"><Label htmlFor="pw">Heslo</Label><Input id="pw" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
           <Button type="submit" className="w-full" disabled={busy}>{mode === "up" ? "Vytvořit účet" : "Přihlásit se"}</Button>
         </form>
-        <Button variant="secondary" className="mt-2 w-full" onClick={google}>Pokračovat přes Google</Button>
+        {false && <Button variant="secondary" className="mt-2 w-full" onClick={google}>Pokračovat přes Google</Button>}
         {android && (
           <a href={APK_URL} className="mt-2 block w-full rounded-md border border-primary/50 px-4 py-2 text-center text-sm font-medium text-primary hover:bg-primary/10">
             Stáhnout aplikaci pro Android (kroky z Health Connect)
