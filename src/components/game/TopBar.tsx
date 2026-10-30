@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/game/config";
 import { useAction, useTodaySteps, type GameState, type Guild } from "@/game/api";
 import { SimBadge, StepAmount } from "./ui";
+import { StepGuide } from "./StepGuide";
 import logoTop from "@/assets/summit-logo-topbar.png";
 import logoTopIcon from "@/assets/summit-logo-topbar-icon.png";
 
@@ -47,10 +48,20 @@ export function TopBar({ state, guild }: { state: GameState; guild: Guild | null
 
 function TodaySteps() {
   const today = useTodaySteps();
+  const [open, setOpen] = useState(false);
+  const zero = today.isSuccess && today.data === 0;
   return (
-    <div className="flex items-center gap-2 px-1" title="Dnes nachozené kroky (od půlnoci)">
-      <Footprints className="size-5 text-muted-foreground" />
-      <div className="leading-tight"><div className="text-[10px] text-muted-foreground">Dnes</div><div className="font-semibold tabular-nums text-muted-foreground">{fmt(today.data)}</div></div>
+    <div className="relative">
+      <button type="button" onClick={() => setOpen(true)} className="flex items-center gap-2 px-1 text-left" title="Dnes nachozené kroky (od půlnoci)">
+        <Footprints className="size-5 text-muted-foreground" />
+        <div className="leading-tight"><div className="text-[10px] text-muted-foreground">Dnes</div><div className="font-semibold tabular-nums text-muted-foreground">{fmt(today.data)}</div></div>
+      </button>
+      {zero && (
+        <button type="button" onClick={() => setOpen(true)} className="panel absolute left-0 top-full mt-3 whitespace-nowrap px-2 py-1 text-xs text-primary underline">
+          Jak správně zapojit počítání kroků?
+        </button>
+      )}
+      <StepGuide open={open} onOpenChange={setOpen} />
     </div>
   );
 }
