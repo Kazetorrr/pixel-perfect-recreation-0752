@@ -85,6 +85,13 @@
       "when": 1793352150829,
       "tag": "0011_sync_my_steps",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793357352564,
+      "tag": "0012_home_gps_accuracy",
+      "breakpoints": true
     }
   ]
 }
