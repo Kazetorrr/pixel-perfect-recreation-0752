@@ -12,7 +12,10 @@
 - [ ] Sestavit novou APK (Actions → Android APK), přeinstalovat a ověřit na telefonu: zůstane v aplikaci, dialog nabídne „Přesná“, domov se potvrdí.
 - [ ] Publikovat web, aby testéři na summ-it.lovable.app viděli aktuální pravidla (limit přesnosti 3000 m).
 
-
+## Přihlášení – aktuální zadání
+- [x] Po registraci hráči jasně říct, že má ověřit e-mail; umožnit poslat ověřovací e-mail znovu.
+- [x] Přeložit bezpečnostní hlášku o čekání mezi pokusy do češtiny.
+- [ ] Publikovat web, aby testéři viděli hlášku o ověření e-mailu.
 
 ## Dřívější ekonomika – historický seznam
 
