@@ -8,7 +8,7 @@
 ## Android shell – aktuální zadání
 - [x] Držet navigaci uvnitř aplikace (allowNavigation), ne v Chrome.
 - [x] Vyžádat si v aplikaci oprávnění k přesné poloze před zaměřením GPS.
-- [x] Povolit při zakládání domova i hrubý室内 signál: limit přesnosti 3000 m (přísných 100 m zůstává jen pro lokality v terénu), odstranit hlášku „u okna nebo venku“.
+- [x] Povolit při zakládání domova i hrubý signál uvnitř budovy: limit přesnosti 3000 m (přísných 100 m zůstává jen pro lokality v terénu), odstranit hlášku „u okna nebo venku“.
 - [ ] Sestavit novou APK (Actions → Android APK), přeinstalovat a ověřit na telefonu: zůstane v aplikaci, dialog nabídne „Přesná“, domov se potvrdí.
 
 
