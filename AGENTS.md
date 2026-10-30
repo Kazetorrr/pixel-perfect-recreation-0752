@@ -23,3 +23,6 @@
 - Expedition supplies move through prepare_expedition_gps as one atomic multi-resource action with owned-city and physical-location checks; the legacy remote-loading RPC is disabled to close bypass paths.
 - Test expedition loading uses a dedicated globally testing-gated RPC that reuses the authoritative transfer with simulated city coordinates; only GPS presence is bypassed, never ownership, stocks, capacity or provenance.
 - Test onboarding uses a dedicated RPC gated by the global testing switch, reuses atomic onboarding validation/allocation and leaves home_verified_at null; it must never bypass account authentication or affect expedition GPS rules.
+
+- Android app is a Capacitor shell loading the published URL (capacitor.config.ts) and built by GitHub Actions; Health Connect totals go through authenticated `sync_my_steps` (today/yesterday, daily cap) into `credit_verified_steps`. Why: no local Android tooling, web updates reach phones instantly.
+- Settlements and POI are cached in IndexedDB (src/lib/static-cache.ts); bump its VERSION after data imports. Why: minimal mobile data.

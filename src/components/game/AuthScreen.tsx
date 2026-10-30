@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import heroUrl from "@/assets/trekra-hero.jpg";
+import { useEffect as useEff } from "react";
+import { isNativeApp } from "@/lib/health-connect";
+import { APK_URL } from "@/game/config";
 import logoIcon from "@/assets/summit-logo-icon.png";
 
 export function AuthScreen() {
@@ -13,6 +16,8 @@ export function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [android, setAndroid] = useState(false);
+  useEff(() => { setAndroid(!!APK_URL && /android/i.test(navigator.userAgent) && !isNativeApp()); }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +48,11 @@ export function AuthScreen() {
           <Button type="submit" className="w-full" disabled={busy}>{mode === "up" ? "Vytvořit účet" : "Přihlásit se"}</Button>
         </form>
         <Button variant="secondary" className="mt-2 w-full" onClick={google}>Pokračovat přes Google</Button>
+        {android && (
+          <a href={APK_URL} className="mt-2 block w-full rounded-md border border-primary/50 px-4 py-2 text-center text-sm font-medium text-primary hover:bg-primary/10">
+            Stáhnout aplikaci pro Android (kroky z Health Connect)
+          </a>
+        )}
         <button className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground" onClick={() => setMode(mode === "up" ? "in" : "up")}>
           {mode === "up" ? "Už máte účet? Přihlaste se" : "Nemáte účet? Zaregistrujte se"}
         </button>

@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, Resource } from "./config";
+import { cached } from "@/lib/static-cache";
 
 export type City = {
   id: string; name: string; lat: number; lng: number; special: string | null; tier: Tier;
@@ -64,7 +65,7 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 }
 
 export const useCities = () =>
-  useQuery({ queryKey: ["cities"], staleTime: Infinity, queryFn: async () => {
+  useQuery({ queryKey: ["cities"], staleTime: Infinity, queryFn: () => cached("cities", async () => {
     // Server caps responses at 1000 rows — page through all settlements in parallel.
     const { count, error: ce } = await supabase.from("cities").select("id", { count: "exact", head: true });
     if (ce) throw ce;
@@ -74,9 +75,9 @@ export const useCities = () =>
     const all: City[] = [];
     for (const p of parts) { if (p.error) throw p.error; all.push(...(p.data as unknown as City[])); }
     return all.sort((a, b) => a.name.localeCompare(b.name, "cs"));
-  } });
+  }) });
 export const usePois = () =>
-  useQuery({ queryKey: ["pois"], staleTime: Infinity, queryFn: async () => {
+  useQuery({ queryKey: ["pois"], staleTime: Infinity, queryFn: () => cached("pois", async () => {
     const { count, error: ce } = await supabase.from("pois").select("id", { count: "exact", head: true });
     if (ce) throw ce;
     const PAGE = 1000, pages = Math.ceil((count ?? 0) / PAGE);
@@ -85,7 +86,7 @@ export const usePois = () =>
     const all: Poi[] = [];
     for (const p of parts) { if (p.error) throw p.error; all.push(...(p.data as unknown as Poi[])); }
     return all;
-  } });
+  }) });
 export const useGameState = (enabled: boolean) =>
   useQuery({ queryKey: ["state"], enabled, refetchInterval: 20_000, refetchOnWindowFocus: true, queryFn: () => rpc<GameState | { onboarded: false }>("get_state") });
 export type SettlementOwner = { id: string; username: string; color: string; market_level: number; warehouse_level: number; buildings: Partial<Record<Resource, number>> };
