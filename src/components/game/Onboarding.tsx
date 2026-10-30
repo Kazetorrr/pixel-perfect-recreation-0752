@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCities, useGameState, type City } from "@/game/api";
 import { DEFAULT_PLAYER_COLOR, TIER_META, haversineKm, type Tier } from "@/game/config";
 import { ArrowLeft, FlaskConical, LocateFixed, MapPin, RefreshCw } from "lucide-react";
+import { ensureLocationPermission } from "@/lib/native-location";
 
 type Fix = { lat: number; lng: number; accuracy: number };
 const DEFAULT_RADIUS: Record<Tier, number> = { village: 3, town: 5, regional: 10 };

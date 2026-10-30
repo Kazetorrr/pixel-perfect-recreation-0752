@@ -7,6 +7,7 @@ import { useAction, type City, type GameState, type Inv, type PlayerCity } from 
 import { RESOURCES, RESOURCE_META, fmt } from '@/game/config';
 import { expeditionLoadError, expeditionPresence, type GpsFix } from '@/game/expedition';
 import { ResCounters, ResDot } from './ui';
+import { ensureLocationPermission } from '@/lib/native-location';
 
 export function ExpeditionSupply({ city, pc, state }: { city: City; pc: PlayerCity; state: GameState }) {
   const [amounts, setAmounts] = useState<Inv>({});

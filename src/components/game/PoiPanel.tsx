@@ -5,6 +5,7 @@ import { CATEGORY_META, RESOURCE_META, fmt } from "@/game/config";
 import { useAction, usePoiDetail, type GameState, type Poi } from "@/game/api";
 import { ResCounters, ResDot, Section, SimBadge } from "./ui";
 import { toast } from "sonner";
+import { ensureLocationPermission } from "@/lib/native-location";
 
 export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; onClose: () => void }) {
   const meta = CATEGORY_META[poi.category];
