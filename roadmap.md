@@ -5,6 +5,11 @@
 - [x] Zabezpečit vlastní expediční nakládání GPS polohou a atomickým přesunem zásob.
 - [x] Ověřit pravidla nakládání, strom vylepšení a nabídku na malých obrazovkách (17 testů; přihlášený hráč, nakládání s emulovanou GPS, posouvání při 360 × 640).
 
+## Android shell – aktuální zadání
+- [x] Držet navigaci uvnitř aplikace (allowNavigation), ne v Chrome.
+- [x] Vyžádat si v aplikaci oprávnění k přesné poloze před zaměřením GPS.
+- [ ] Sestavit novou APK (Actions → Android APK), přeinstalovat a ověřit na telefonu: zůstane v aplikaci, dialog nabídne „Přesná“, domov se potvrdí.
+
 ## Dřívější ekonomika – historický seznam
 
 - [ ] Schválit jednotný plán změny ekonomiky.

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCities, useGameState, type City } from "@/game/api";
 import { DEFAULT_PLAYER_COLOR, TIER_META, haversineKm, type Tier } from "@/game/config";
 import { ArrowLeft, FlaskConical, LocateFixed, MapPin, RefreshCw } from "lucide-react";
+import { ensureLocationPermission } from "@/lib/native-location";
 
 type Fix = { lat: number; lng: number; accuracy: number };
 const DEFAULT_RADIUS: Record<Tier, number> = { village: 3, town: 5, regional: 10 };
@@ -41,6 +42,8 @@ export function Onboarding() {
 
   const locate = async () => {
     setLocating(true);
+    try { await ensureLocationPermission(); }
+    catch (e) { toast.error((e as Error).message); setLocating(false); return; }
     try {
       // Watch up to 20 s and keep the most accurate fix (first fixes are often network-based ±2 km).
       const p = await new Promise<GeolocationPosition>((resolve, reject) => {

@@ -5,6 +5,7 @@ import { CATEGORY_META, RESOURCE_META, fmt } from "@/game/config";
 import { useAction, usePoiDetail, type GameState, type Poi } from "@/game/api";
 import { ResCounters, ResDot, Section, SimBadge } from "./ui";
 import { toast } from "sonner";
+import { ensureLocationPermission } from "@/lib/native-location";
 
 export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; onClose: () => void }) {
   const meta = CATEGORY_META[poi.category];
@@ -18,9 +19,11 @@ export function PoiPanel({ poi, state, onClose }: { poi: Poi; state: GameState; 
   const claim = useAction<{ p_poi: string; p_mode: string; p_lat: number | null; p_lng: number | null; p_accuracy: number | null }>("claim_poi", (d) =>
     (d as { status: string }).status === "visit" ? "Návštěva zaznamenána (guilda již lokalitu vlastní)" : state.profile.guild_id ? "Lokalita získána pro guildu" : "Lokalita získána");
 
-  const gpsClaim = () => {
+  const gpsClaim = async () => {
     if (!("geolocation" in navigator)) { toast.error("Prohlížeč nepodporuje určování polohy"); return; }
     setLocating(true);
+    try { await ensureLocationPermission(); }
+    catch (err) { setLocating(false); toast.error((err as Error).message); return; }
     navigator.geolocation.getCurrentPosition(
       (p) => { setLocating(false); claim.mutate({ p_poi: poi.id, p_mode: "gps", p_lat: p.coords.latitude, p_lng: p.coords.longitude, p_accuracy: p.coords.accuracy }); },
       (e) => { setLocating(false); toast.error(e.code === 1 ? "Přístup k poloze byl zamítnut. Povolte ho v nastavení prohlížeče." : "Polohu se nepodařilo zjistit"); },
