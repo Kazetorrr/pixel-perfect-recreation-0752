@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { fmt } from "@/game/config";
-import { useAction, type GameState, type Guild } from "@/game/api";
+import { useAction, useTodaySteps, type GameState, type Guild } from "@/game/api";
 import { SimBadge, StepAmount } from "./ui";
 import logoTop from "@/assets/summit-logo-topbar.png";
 import logoTopIcon from "@/assets/summit-logo-topbar-icon.png";
@@ -41,6 +41,16 @@ export function TopBar({ state, guild }: { state: GameState; guild: Guild | null
           <Button variant="secondary" className="w-full" onClick={() => supabase.auth.signOut()}><LogOut /> Odhlásit</Button>
         </PopoverContent>
       </Popover>
+    </div>
+  );
+}
+
+function TodaySteps() {
+  const today = useTodaySteps();
+  return (
+    <div className="flex items-center gap-2 px-1" title="Dnes nachozené kroky (od půlnoci)">
+      <Footprints className="size-5 text-muted-foreground" />
+      <div className="leading-tight"><div className="text-[10px] text-muted-foreground">Dnes</div><div className="font-semibold tabular-nums text-muted-foreground">{fmt(today.data)}</div></div>
     </div>
   );
 }
