@@ -19,6 +19,11 @@ jobs:
           grep -q 'minSdkVersion = 26' android/variables.gradle
           cat android/variables.gradle
 
+      - name: Location permissions (GPS onboarding/expeditions)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <application#' $M
+          grep -q 'ACCESS_FINE_LOCATION' $M
       - name: Health Connect permissions
         run: |
           M=android/app/src/main/AndroidManifest.xml
