@@ -28,7 +28,7 @@ export function Onboarding() {
   const palette = cfg?.player_colors ?? [DEFAULT_PLAYER_COLOR];
   const testingEnabled = cfg?.dev_mode === true;
   const radius = cfg?.home_radius_km ?? DEFAULT_RADIUS;
-  const maxAcc = (cfg as { home_gps_max_accuracy_m?: number } | undefined)?.home_gps_max_accuracy_m ?? 300;
+
 
   const nearby = useMemo(() => {
     if (!fix) return [] as (City & { km: number })[];
@@ -104,7 +104,7 @@ export function Onboarding() {
             <>
               {sel ? (
                 <div><div className="text-lg font-semibold">{sel.name}</div><div className="text-xs text-muted-foreground">{TIER_META[sel.tier].label} · {sel.km.toFixed(1)} km od vás · přesnost ±{Math.round(fix.accuracy)} m</div>
-                  {fix.accuracy > maxAcc && <p className="mt-1 text-xs text-destructive">Signál je slabý (limit ±{maxAcc} m). Zkuste chvíli počkat u okna nebo venku a zaměřit znovu.</p>}</div>
+                  </div>
               ) : <p className="text-sm text-destructive">V okolí jsme nenašli žádné sídlo.</p>}
               {nearby.length > 1 && (
                 <button type="button" className="text-xs text-primary underline" onClick={() => setShowOthers((v) => !v)}>Netrefili jsme se? Zde jsou ostatní města a vesnice ve tvém okolí.</button>
