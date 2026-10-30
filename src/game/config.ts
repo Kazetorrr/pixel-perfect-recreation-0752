@@ -71,4 +71,4 @@ export const TIER_ICON: Record<Tier, string> = {
 };
 
 /** Download link for the Android test APK (GitHub release). Empty = button hidden. */
-export const APK_URL = "";
+export const APK_URL = "https://github.com/Kazetorrr/pixel-perfect-recreation-0752/releases/download/latest/app-debug.apk";
