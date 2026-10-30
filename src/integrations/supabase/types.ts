@@ -1006,6 +1006,10 @@ export type Database = {
       set_player_color: { Args: { p_color: string }; Returns: undefined }
       set_testing_mode: { Args: { p_enabled: boolean }; Returns: undefined }
       start_travel: { Args: { p_city: string }; Returns: Json }
+      sync_my_steps: {
+        Args: { p_day: string; p_steps: number }
+        Returns: number
+      }
       testing_enabled: { Args: never; Returns: boolean }
       upgrade_facility: {
         Args: { p_city: string; p_kind: string }

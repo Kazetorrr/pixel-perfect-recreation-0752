@@ -78,6 +78,13 @@
       "when": 1793311448318,
       "tag": "0010_test_expedition_loading_without_gps",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793352150829,
+      "tag": "0011_sync_my_steps",
+      "breakpoints": true
     }
   ]
 }
