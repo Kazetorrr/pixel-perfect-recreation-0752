@@ -10,6 +10,8 @@
 - [x] Vyžádat si v aplikaci oprávnění k přesné poloze před zaměřením GPS.
 - [x] Povolit při zakládání domova i hrubý signál uvnitř budovy: limit přesnosti 3000 m (přísných 100 m zůstává jen pro lokality v terénu), odstranit hlášku „u okna nebo venku“.
 - [ ] Sestavit novou APK (Actions → Android APK), přeinstalovat a ověřit na telefonu: zůstane v aplikaci, dialog nabídne „Přesná“, domov se potvrdí.
+- [ ] Publikovat web, aby testéři na summ-it.lovable.app viděli aktuální pravidla (limit přesnosti 3000 m).
+
 
 
 ## Dřívější ekonomika – historický seznam
