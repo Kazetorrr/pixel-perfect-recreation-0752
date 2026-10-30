@@ -11,7 +11,7 @@ import { isNativeApp } from "@/lib/health-connect";
 import { APK_URL } from "@/game/config";
 import { authErrorMessage } from "@/game/auth-messages";
 import { MailCheck } from "lucide-react";
-import logoIcon from "@/assets/summit-logo-icon.png";
+import logoTop from "@/assets/summit-logo-topbar.png";
 
 export function AuthScreen() {
   const [mode, setMode] = useState<"in" | "up">("up");
@@ -54,9 +54,9 @@ export function AuthScreen() {
       <img src={heroUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
       <div className="panel relative w-full max-w-sm p-6">
-        <div className="mb-6 flex items-center gap-3">
-          <img src={logoIcon} alt="" className="size-9" />
-          <div><h1 className="text-2xl font-semibold">summ-it</h1><p className="text-sm text-muted-foreground">Choď, stav, objevuj.</p></div>
+        <div className="mb-6">
+          <h1><img src={logoTop} alt="summ-it beta" className="h-12 w-auto" /></h1>
+          <p className="mt-2 text-sm text-muted-foreground">Choď, stav, objevuj.</p>
         </div>
 
         {sentTo ? (
